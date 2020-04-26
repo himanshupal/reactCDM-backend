@@ -105,16 +105,44 @@ module.exports = gql`
     address: Address
     photo: String
     email: String
+    present: [String]
     aadharNumber: String
     contactNumber: String
     dateOfLeaving: String
   }
 
+  input AttendenceInput {
+    _id: ID
+    class: String
+    holiday: Boolean
+    students: [String]
+  }
+  type Attendence {
+    _id: ID
+    holiday: Boolean
+    students: [String]
+  }
+
+  input ClassInput {
+    _id: ID
+    subjects: [String]
+  }
+  type Class {
+    _id: ID
+    totalStudents: Int
+    subjects: [String]
+    attendence: [Attendence]
+    students: [Student]
+  }
+
   type Query {
+    classes(_id: ID): [Class]
     student(_id: ID): Student
     students(class: String): [Student]
   }
   type Mutation {
+    addClass(input: ClassInput): String
     addStudent(input: StudentInput): String
+    addAttendence(input: AttendenceInput): String
   }
 `;

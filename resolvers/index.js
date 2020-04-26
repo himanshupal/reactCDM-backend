@@ -1,13 +1,19 @@
-const { addStudent } = require(`../resolvers/mutation/addStudent`);
-const { students } = require(`../resolvers/query/students`);
-const { student } = require(`../resolvers/query/student`);
+const { addAttendence } = require(`./mutation/addAttendence`),
+  { addStudent } = require(`./mutation/addStudent`),
+  { addClass } = require(`./mutation/addClass`),
+  { students } = require(`./query/students`),
+  { student } = require(`./query/student`),
+  { classes } = require(`./query/classes`);
 
 module.exports = {
   Query: {
+    classes,
     student,
     students,
   },
   Mutation: {
+    addClass,
     addStudent,
+    addAttendence,
   },
 };

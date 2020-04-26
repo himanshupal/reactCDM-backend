@@ -8,7 +8,7 @@ exports.student = async (_, args) => {
     return await (await client)
       .db(`RBMI`)
       .collection(`students`)
-      .findOne({ studentId: args.studentId });
+      .findOne({ _id: args._id });
   } catch (error) {
     throw new Error(error);
   }

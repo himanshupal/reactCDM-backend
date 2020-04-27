@@ -105,7 +105,7 @@ module.exports = gql`
     address: Address
     photo: String
     email: String
-    present: [String]
+    present: [Attendence]
     aadharNumber: String
     contactNumber: String
     dateOfLeaving: String
@@ -120,6 +120,7 @@ module.exports = gql`
   type Attendence {
     _id: ID
     holiday: Boolean
+    present: Int
     students: [String]
   }
 
@@ -136,9 +137,9 @@ module.exports = gql`
   }
 
   type Query {
-    classes(_id: ID): [Class]
-    student(_id: ID): Student
-    students(class: String): [Student]
+    getClass(_id: ID): [Class]
+    getStudent(_id: ID): Student
+    getAttendence(_id: ID, class: String): Attendence
   }
   type Mutation {
     addClass(input: ClassInput): String

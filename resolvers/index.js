@@ -1,15 +1,15 @@
 const { addAttendence } = require(`./mutation/addAttendence`),
+  { getAttendence } = require(`./query/getAttendence`),
   { addStudent } = require(`./mutation/addStudent`),
+  { getStudent } = require(`./query/getStudent`),
   { addClass } = require(`./mutation/addClass`),
-  { students } = require(`./query/students`),
-  { student } = require(`./query/student`),
-  { classes } = require(`./query/classes`);
+  { getClass } = require(`./query/getClass`);
 
 module.exports = {
   Query: {
-    classes,
-    student,
-    students,
+    getClass,
+    getStudent,
+    getAttendence
   },
   Mutation: {
     addClass,

@@ -9,6 +9,7 @@ exports.addAttendence = async (_, { input }) => {
       _id: input._id,
       holiday: input.holiday,
       students: input.students,
+      present: input.students.length,
       class: input.class,
     });
     return res.insertedId;

@@ -21,9 +21,6 @@ exports.getTeacher = async (_, { _id }) => {
 						},
 					},
 					{
-						$unwind: `$classTeacher`,
-					},
-					{
 						$lookup: {
 							from: `subjects`,
 							localField: `_id`,
@@ -36,6 +33,8 @@ exports.getTeacher = async (_, { _id }) => {
 			if (res.length === 0)
 				throw new Error(`No teachers found matching given _id...`);
 			return res.map((el) => {
+				if (el.classTeacher.length > 0) classTeacherOf = el.classTeacher[0]._id;
+				else classTeacherOf = null;
 				return { ...el, classTeacherOf: el.classTeacher._id };
 			});
 		}
@@ -52,9 +51,6 @@ exports.getTeacher = async (_, { _id }) => {
 					},
 				},
 				{
-					$unwind: `$classTeacher`,
-				},
-				{
 					$lookup: {
 						from: `subjects`,
 						localField: `_id`,
@@ -65,7 +61,9 @@ exports.getTeacher = async (_, { _id }) => {
 			])
 			.toArray();
 		return res.map((el) => {
-			return { ...el, classTeacherOf: el.classTeacher._id };
+			if (el.classTeacher.length > 0) classTeacherOf = el.classTeacher[0]._id;
+			else classTeacherOf = null;
+			return { ...el, classTeacherOf };
 		});
 	} catch (error) {
 		throw new Error(error);

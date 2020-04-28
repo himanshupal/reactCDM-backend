@@ -1,10 +1,10 @@
 const { client } = require(`../../index`);
 
-exports.addClass = async (_, { input }) => {
+exports.addSubject = async (_, { input }) => {
 	try {
 		res = await (await client)
 			.db(`RBMI`)
-			.collection(`classes`)
+			.collection(`subjects`)
 			.insertOne({ ...input });
 		return res.insertedId;
 	} catch (error) {

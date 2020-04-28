@@ -208,7 +208,7 @@ module.exports = gql`
 		getClass(_id: ID): [Class]
 		getStudent(_id: ID): Student
 		getTeacher(_id: ID): [Teacher]
-		getAttendence(_id: ID, class: String): AttendenceDay
+		getAttendence(_id: String): AttendenceDay
 	}
 	type Mutation {
 		addClass(input: ClassInput): String

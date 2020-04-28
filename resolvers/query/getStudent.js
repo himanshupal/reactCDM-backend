@@ -1,11 +1,10 @@
 const { client } = require(`../../index`);
 
 exports.getStudent = async (_, { _id }) => {
-	if (!_id) {
+	if (!_id)
 		throw new Error(
 			`You must provide a studentId as _id to get student details !!!`
 		);
-	}
 	try {
 		const res = await (await client)
 			.db(`RBMI`)

@@ -1,11 +1,10 @@
 const { client } = require(`../../index`);
 
-exports.getAttendence = async (_, args) => {
-	if (!args._id || !args.class) {
+exports.getAttendence = async (_, { _id }) => {
+	if (!_id)
 		throw new Error(
-			`You must provide a date & class as _id & class to get attendence details !!!`
+			`You must provide a date & class separated with space to get attendence details !!!`
 		);
-	}
 	try {
 		const res = await (await client)
 			.db(`RBMI`)
@@ -13,8 +12,7 @@ exports.getAttendence = async (_, args) => {
 			.aggregate([
 				{
 					$match: {
-						_id: args._id,
-						class: args.class,
+						_id,
 					},
 				},
 				{

@@ -1,4 +1,4 @@
-const { client } = require(`../../index`);
+const { client, Error } = require(`../../index`);
 
 exports.getTeacher = async (_, { _id }) => {
 	try {
@@ -31,7 +31,9 @@ exports.getTeacher = async (_, { _id }) => {
 				])
 				.toArray();
 			if (res.length === 0)
-				throw new Error(`No teachers found matching given _id...`);
+				throw new Error(`Not found...`, {
+					error: `No teachers found matching given _id...`,
+				});
 			return res.map((el) => {
 				if (el.classTeacher.length > 0) classTeacherOf = el.classTeacher[0]._id;
 				else classTeacherOf = null;

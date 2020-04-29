@@ -1,6 +1,11 @@
-const { client } = require(`../../index`);
+const { client, Error } = require(`../../index`);
 
-exports.getClass = async (_, { _id }) => {
+exports.getClass = async (_, { _id, department }) => {
+	if (!_id && !department) {
+		throw new Error(`Arguments missing...`, {
+			error: `You must provide either an _id for class or department for all classes within department...`,
+		});
+	}
 	try {
 		if (_id) {
 			const res = await (await client)
@@ -39,7 +44,9 @@ exports.getClass = async (_, { _id }) => {
 				])
 				.toArray();
 			if (res.length === 0)
-				throw new Error(`No class found matching given _id...`);
+				throw new Error(`Not found...`, {
+					error: `No class found matching given _id...`,
+				});
 			return res.map((el) => {
 				return {
 					...el,
@@ -52,6 +59,11 @@ exports.getClass = async (_, { _id }) => {
 			.db(`RBMI`)
 			.collection(`classes`)
 			.aggregate([
+				{
+					$match: {
+						department,
+					},
+				},
 				{
 					$lookup: {
 						from: `students`,
@@ -78,6 +90,10 @@ exports.getClass = async (_, { _id }) => {
 				},
 			])
 			.toArray();
+		if (res.length === 0)
+			throw new Error(`Not found...`, {
+				error: `No departments found matching given term...`,
+			});
 		return res.map((el) => {
 			return {
 				...el,

@@ -1,4 +1,4 @@
-const { client } = require(`../../index`);
+const { client, Error } = require(`../../index`);
 
 exports.addTeacher = async (_, { input }) => {
 	try {
@@ -6,7 +6,9 @@ exports.addTeacher = async (_, { input }) => {
 			.db(`RBMI`)
 			.collection(`teachers`)
 			.insertOne({ ...input });
-		return res.insertedId;
+		return res.insertedCount > 0
+			? `Saved successfully`
+			: `There was some error saving data, please try again or contact admin ! `;
 	} catch (error) {
 		throw new Error(error);
 	}

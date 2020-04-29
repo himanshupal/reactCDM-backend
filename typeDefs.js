@@ -109,6 +109,7 @@ module.exports = gql`
 		aadharNumber: String
 		contactNumber: String
 		dateOfLeaving: String
+		lastUpdated: Float
 	}
 
 	input AttendenceInput {
@@ -122,24 +123,29 @@ module.exports = gql`
 		holiday: Boolean
 		totalStudents: Int
 		students: [String]
+		lastUpdated: Float
 	}
 	type AttendenceDay {
 		holiday: Boolean
 		totalStudents: Int
 		students: [Student]
+		lastUpdated: Float
 	}
 
 	input ClassInput {
 		_id: ID #ClassName
+		department: String
 		classTeacher: String
 	}
 	type Class {
 		_id: ID #ClassName
 		totalStudents: Int
+		department: String
 		timeTable: [Subject]
 		classTeacher: String
 		attendence: [AttendenceClass]
 		students: [Student]
+		lastUpdated: Float
 	}
 
 	input SubjectInput {
@@ -157,6 +163,7 @@ module.exports = gql`
 		teacher: String
 		from: String
 		to: String
+		lastUpdated: Float
 	}
 
 	input TeacherInput {
@@ -202,13 +209,14 @@ module.exports = gql`
 		dateOfJoining: String
 		dateOfLeaving: String
 		classTeacherOf: String
+		lastUpdated: Float
 	}
 
 	type Query {
-		getClass(_id: ID): [Class]
 		getStudent(_id: ID): Student
 		getTeacher(_id: ID): [Teacher]
 		getAttendence(_id: String): AttendenceDay
+		getClass(_id: ID, department: String): [Class]
 	}
 	type Mutation {
 		addClass(input: ClassInput): String
@@ -216,5 +224,11 @@ module.exports = gql`
 		addSubject(input: SubjectInput): String
 		addTeacher(input: TeacherInput): String
 		addAttendence(input: AttendenceInput): String
+
+		updateClass(input: ClassInput): String
+		updateStudent(input: StudentInput): String
+		updateTeacher(input: TeacherInput): String
+		updateSubject(input: SubjectInput): String
+		updateAttendence(input: AttendenceInput): String
 	}
 `;

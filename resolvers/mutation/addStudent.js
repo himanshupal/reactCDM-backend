@@ -7,7 +7,7 @@ exports.addStudent = async (_, { input }) => {
 			.collection(`students`)
 			.insertOne({
 				...input,
-				registeredOn: Date.now(),
+				createdAt: Date.now(),
 			});
 		return res.insertedCount > 0
 			? `Saved successfully`

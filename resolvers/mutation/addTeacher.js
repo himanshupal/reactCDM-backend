@@ -5,7 +5,7 @@ exports.addTeacher = async (_, { input }) => {
 		const res = await (await client)
 			.db(`RBMI`)
 			.collection(`teachers`)
-			.insertOne({ ...input });
+			.insertOne({ ...input, createdAt: Date.now() });
 		return res.insertedCount > 0
 			? `Saved successfully`
 			: `There was some error saving data, please try again or contact admin ! `;

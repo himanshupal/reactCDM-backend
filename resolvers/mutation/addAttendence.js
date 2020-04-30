@@ -8,13 +8,14 @@ exports.addAttendence = async (_, { input }) => {
 	try {
 		if (input.students) totalStudents = input.students.length;
 		else totalStudents = 0;
-		res = await (await client)
+		const res = await (await client)
 			.db(`RBMI`)
 			.collection(`attendence`)
 			.insertOne({
 				...input,
 				_id: `${input._id} ${input.class}`,
 				totalStudents,
+				createdAt: Date.now(),
 			});
 		return res.insertedCount > 0
 			? `Saved successfully`

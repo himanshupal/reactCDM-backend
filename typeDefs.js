@@ -92,7 +92,6 @@ module.exports = gql`
 		rollNumber: Float
 		registrationNumber: String
 		enrollmentNumber: Float
-		registeredOn: String
 		name: Name
 		father: Parent
 		mother: Parent
@@ -109,7 +108,13 @@ module.exports = gql`
 		aadharNumber: String
 		contactNumber: String
 		dateOfLeaving: String
+		createdAt: Float
 		lastUpdated: Float
+	}
+
+	input AttendenceInputBulk {
+		class: String
+		data: [AttendenceInput]
 	}
 
 	input AttendenceInput {
@@ -123,12 +128,14 @@ module.exports = gql`
 		holiday: Boolean
 		totalStudents: Int
 		students: [String]
+		createdAt: Float
 		lastUpdated: Float
 	}
 	type AttendenceDay {
 		holiday: Boolean
 		totalStudents: Int
 		students: [Student]
+		createdAt: Float
 		lastUpdated: Float
 	}
 
@@ -145,6 +152,7 @@ module.exports = gql`
 		classTeacher: String
 		attendence: [AttendenceClass]
 		students: [Student]
+		createdAt: Float
 		lastUpdated: Float
 	}
 
@@ -163,6 +171,7 @@ module.exports = gql`
 		teacher: String
 		from: String
 		to: String
+		createdAt: Float
 		lastUpdated: Float
 	}
 
@@ -209,6 +218,7 @@ module.exports = gql`
 		dateOfJoining: String
 		dateOfLeaving: String
 		classTeacherOf: String
+		createdAt: Float
 		lastUpdated: Float
 	}
 
@@ -230,5 +240,6 @@ module.exports = gql`
 		updateTeacher(input: TeacherInput): String
 		updateSubject(input: SubjectInput): String
 		updateAttendence(input: AttendenceInput): String
+		addAttendenceBulk(input: AttendenceInputBulk): String
 	}
 `;

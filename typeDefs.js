@@ -140,12 +140,18 @@ module.exports = gql`
 	}
 
 	input ClassInput {
-		_id: ID #ClassName
+		_id: ID #Batch
+		sessionStart: String
+		sessionEnd: String
+		className: String
 		department: String
 		classTeacher: String
 	}
 	type Class {
-		_id: ID #ClassName
+		_id: ID #Batch
+		sessionStart: String
+		sessionEnd: String
+		className: String
 		totalStudents: Int
 		department: String
 		timeTable: [Subject]

@@ -27,6 +27,10 @@ exports.addAttendenceBulk = async (_, { input }) => {
 			? `Attendence of ${res.insertedCount} days saved successfully`
 			: `There was some error saving data, please try again or contact admin ! `;
 	} catch (error) {
+		if (error.code === 11000)
+			throw new Error(`Duplicate key Error !!!`, {
+				error: `${error.keyValue._id} already exists in database, can't replace !`,
+			});
 		throw new Error(error);
 	}
 };

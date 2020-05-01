@@ -36,7 +36,7 @@ exports.getClass = async (_, { _id, department }) => {
 					{
 						$lookup: {
 							from: `subjects`,
-							localField: `_id`,
+							localField: `className`,
 							foreignField: `class`,
 							as: `subjects`,
 						},
@@ -84,7 +84,7 @@ exports.getClass = async (_, { _id, department }) => {
 					$lookup: {
 						from: `subjects`,
 						localField: `_id`,
-						foreignField: `class`,
+						foreignField: `className`,
 						as: `subjects`,
 					},
 				},

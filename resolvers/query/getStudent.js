@@ -23,6 +23,17 @@ exports.getStudent = async (_, { _id }) => {
 						as: `attendence`,
 					},
 				},
+				{
+					$lookup: {
+						from: `classes`,
+						localField: `class`,
+						foreignField: `_id`,
+						as: `class`,
+					},
+				},
+				{
+					$unwind: `$class`,
+				},
 			])
 			.toArray();
 		if (res.length === 0)

@@ -17,7 +17,7 @@ exports.login = async (_, { input }) => {
 				token: sign(
 					{
 						username: res._id,
-						access: `student`,
+						access: res.role,
 					},
 					process.env.jwt_secret,
 					tokenConf

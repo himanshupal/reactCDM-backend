@@ -3,6 +3,7 @@ const { addAttendenceBulk } = require(`./mutation/addAttendenceBulk`),
 	{ addTeacher } = require(`./mutation/addTeacher`),
 	{ addStudent } = require(`./mutation/addStudent`),
 	{ addSubject } = require(`./mutation/addSubject`),
+	{ createGist } = require(`./mutation/createGist`),
 	{ addClass } = require(`./mutation/addClass`),
 	{ login } = require(`./mutation/login`);
 
@@ -15,10 +16,12 @@ const { updateAttendence } = require(`./mutation/updateAttendence`),
 const { getAttendence } = require(`./query/getAttendence`),
 	{ getTeacher } = require(`./query/getTeacher`),
 	{ getStudent } = require(`./query/getStudent`),
-	{ getClass } = require(`./query/getClass`);
+	{ getClass } = require(`./query/getClass`),
+	{ getGist } = require(`./query/getGist`);
 
 module.exports = {
 	Query: {
+		getGist,
 		getClass,
 		getStudent,
 		getTeacher,
@@ -31,6 +34,7 @@ module.exports = {
 		addStudent,
 		addSubject,
 		addTeacher,
+		createGist,
 		addAttendenceBulk,
 
 		updateClass,

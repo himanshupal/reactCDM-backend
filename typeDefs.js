@@ -56,6 +56,7 @@ module.exports = gql`
 		gender: Gender
 		caste: Caste
 		class: String
+		role: String
 		religion: Religion
 		dateOfBirth: String
 		address: AddressInputObject
@@ -104,6 +105,7 @@ module.exports = gql`
 		address: Address
 		photo: String
 		email: String
+		role: String
 		attendence: [AttendenceClass]
 		aadharNumber: String
 		contactNumber: String
@@ -256,6 +258,7 @@ module.exports = gql`
 	}
 
 	type Query {
+		getGist: [Gist]
 		getStudent(_id: ID): Student
 		getTeacher(_id: ID): [Teacher]
 		getAttendence(_id: String): AttendenceDay
@@ -264,6 +267,7 @@ module.exports = gql`
 	type Mutation {
 		login(input: LoginInput): Login
 
+		createGist(input: GistInput): String
 		addClass(input: ClassInput): String
 		addStudent(input: StudentInput): String
 		addSubject(input: SubjectInput): String

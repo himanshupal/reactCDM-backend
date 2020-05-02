@@ -3,7 +3,8 @@ const { addAttendenceBulk } = require(`./mutation/addAttendenceBulk`),
 	{ addTeacher } = require(`./mutation/addTeacher`),
 	{ addStudent } = require(`./mutation/addStudent`),
 	{ addSubject } = require(`./mutation/addSubject`),
-	{ addClass } = require(`./mutation/addClass`);
+	{ addClass } = require(`./mutation/addClass`),
+	{ login } = require(`./mutation/login`);
 
 const { updateAttendence } = require(`./mutation/updateAttendence`),
 	{ updateStudent } = require(`./mutation/updateStudent`),
@@ -24,6 +25,8 @@ module.exports = {
 		getAttendence,
 	},
 	Mutation: {
+		login,
+
 		addClass,
 		addStudent,
 		addSubject,

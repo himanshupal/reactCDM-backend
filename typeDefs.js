@@ -98,7 +98,7 @@ module.exports = gql`
 		bloodGroup: String
 		gender: Gender
 		caste: Caste
-		class: String
+		class: Class
 		religion: Religion
 		dateOfBirth: String
 		address: Address
@@ -228,6 +228,33 @@ module.exports = gql`
 		lastUpdated: Float
 	}
 
+	input GistInput {
+		creator: String
+		subject: String
+		description: String
+		scope: String
+	}
+
+	type Gist {
+		creator: String
+		subject: String
+		description: String
+		scope: String
+		createdAt: Float
+		lastUpdated: Float
+	}
+
+	input LoginInput {
+		username: String
+		password: String
+		otk: String
+	}
+
+	type Login {
+		username: String
+		token: String
+	}
+
 	type Query {
 		getStudent(_id: ID): Student
 		getTeacher(_id: ID): [Teacher]
@@ -235,6 +262,8 @@ module.exports = gql`
 		getClass(_id: ID, department: String): [Class]
 	}
 	type Mutation {
+		login(input: LoginInput): Login
+
 		addClass(input: ClassInput): String
 		addStudent(input: StudentInput): String
 		addSubject(input: SubjectInput): String

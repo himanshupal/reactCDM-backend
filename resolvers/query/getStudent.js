@@ -1,10 +1,17 @@
-const { client, Error } = require(`../../index`);
+const { client, Error } = require(`../../index`),
+	{ CheckAuth } = require(`../../checkAuth`);
 
-exports.getStudent = async (_, { _id }) => {
-	if (!_id)
+exports.getStudent = async (_, { _id }, { headers }) => {
+	const user = CheckAuth(headers.authorization);
+	if (user.access !== `student` && !_id)
 		throw new Error(`Arguments missing...`, {
 			error: `You must provide a studentId as _id to get student details !!!`,
 		});
+	if (user.access === `student`) return findStudent(user.username);
+	return findStudent(_id);
+};
+
+const findStudent = async (studentId) => {
 	try {
 		const res = await (await client)
 			.db(`RBMI`)
@@ -12,7 +19,7 @@ exports.getStudent = async (_, { _id }) => {
 			.aggregate([
 				{
 					$match: {
-						_id,
+						studentId,
 					},
 				},
 				{

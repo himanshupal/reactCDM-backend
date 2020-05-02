@@ -16,6 +16,7 @@ const typeDefs = require(`./typeDefs`),
 new ApolloServer({
 	typeDefs,
 	resolvers,
+	context: ({ req }) => req,
 	tracing: true,
 })
 	.listen((PORT = process.env.PORT || 80))

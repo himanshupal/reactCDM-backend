@@ -1,6 +1,15 @@
-const { client, Error } = require(`../../index`);
+const { client, Error } = require(`../../index`),
+	{ CheckAuth } = require(`../../checkAuth`);
 
 exports.updateAttendence = async (_, { input }) => {
+	user = CheckAuth(headers.authorization);
+	if (
+		user.access !==
+		(`Head of Department` || `Assistant Professor` || `Associate Professor`)
+	)
+		throw new Error(`Access Denied !!!`, {
+			error: `You don't have enough permissions to perform this operation !!!`,
+		});
 	if (!input._id && !input.class)
 		throw new Error(`Argument missing...`, {
 			error: `You must provide a date & class separated with space to update attendence !!!`,
@@ -25,6 +34,7 @@ exports.updateAttendence = async (_, { input }) => {
 						...input,
 						totalStudents,
 						lastUpdated: Date.now(),
+						lastUpdatedBy: user.username,
 					},
 				}
 			);

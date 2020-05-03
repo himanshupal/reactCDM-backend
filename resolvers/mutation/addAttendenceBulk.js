@@ -1,6 +1,15 @@
-const { client, Error } = require(`../../index`);
+const { client, Error } = require(`../../index`),
+	{ CheckAuth } = require(`../../checkAuth`);
 
 exports.addAttendenceBulk = async (_, { input }) => {
+	user = CheckAuth(headers.authorization);
+	if (
+		user.access !==
+		(`Head of Department` || `Assistant Professor` || `Associate Professor`)
+	)
+		throw new Error(`Access Denied !!!`, {
+			error: `You don't have enough permissions to perform this operation !!!`,
+		});
 	try {
 		const res = await (await client)
 			.db(`RBMI`)
@@ -20,6 +29,7 @@ exports.addAttendenceBulk = async (_, { input }) => {
 						students: el.students,
 						totalStudents,
 						createdAt: Date.now(),
+						createdBy: user.username,
 					};
 				}),
 			]);

@@ -238,6 +238,7 @@ module.exports = gql`
 	}
 
 	type Gist {
+		_id: ID
 		creator: String
 		subject: String
 		description: String
@@ -258,7 +259,7 @@ module.exports = gql`
 	}
 
 	type Query {
-		getGist: [Gist]
+		getGist(_id: ID): [Gist]
 		getStudent(_id: ID): Student
 		getTeacher(_id: ID): [Teacher]
 		getAttendence(_id: String): AttendenceDay

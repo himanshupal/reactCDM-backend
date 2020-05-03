@@ -1,6 +1,15 @@
-const { client, Error } = require(`../../index`);
+const { client, Error } = require(`../../index`),
+	{ CheckAuth } = require(`../../checkAuth`);
 
 exports.updateSubject = async (_, { input }) => {
+	user = CheckAuth(headers.authorization);
+	if (
+		user.access !==
+		(`Director` || `Head of Department` || `Associate Professor`)
+	)
+		throw new Error(`Access Denied !!!`, {
+			error: `You don't have enough permissions to perform this operation !!!`,
+		});
 	if (!input._id)
 		throw new Error(`Argument missing...`, {
 			error: `You must provide a subjectId as _id to update subject details !!!`,
@@ -17,6 +26,7 @@ exports.updateSubject = async (_, { input }) => {
 					$set: {
 						...input,
 						lastUpdated: Date.now(),
+						lastUpdatedBy: user.username,
 					},
 				}
 			);

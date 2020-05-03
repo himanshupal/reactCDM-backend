@@ -1,6 +1,15 @@
-const { client, Error } = require(`../../index`);
+const { client, Error } = require(`../../index`),
+	{ CheckAuth } = require(`../../checkAuth`);
 
 exports.addStudent = async (_, { input }) => {
+	user = CheckAuth(headers.authorization);
+	if (
+		user.access !==
+		(`Director` || `Head of Department` || `Associate Professor`)
+	)
+		throw new Error(`Access Denied !!!`, {
+			error: `You don't have enough permissions to perform this operation !!!`,
+		});
 	try {
 		const res = await (await client)
 			.db(`RBMI`)
@@ -8,6 +17,7 @@ exports.addStudent = async (_, { input }) => {
 			.insertOne({
 				...input,
 				createdAt: Date.now(),
+				createdBy: user.username,
 			});
 		return res.insertedCount > 0
 			? `Saved successfully`

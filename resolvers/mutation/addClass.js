@@ -1,6 +1,12 @@
-const { client, Error } = require(`../../index`);
+const { client, Error } = require(`../../index`),
+	{ CheckAuth } = require(`../../checkAuth`);
 
 exports.addClass = async (_, { input }) => {
+	user = CheckAuth(headers.authorization);
+	if (user.access !== (`Head of Department` || `Director`))
+		throw new Error(`Access Denied !!!`, {
+			error: `You don't have enough permissions to perform this operation !!!`,
+		});
 	try {
 		const res = await (await client)
 			.db(`RBMI`)
@@ -9,6 +15,7 @@ exports.addClass = async (_, { input }) => {
 				...input,
 				_id: `${input.className} ${new Date().getFullYear()}`,
 				createdAt: Date.now(),
+				createdBy: user.username,
 			});
 		return res.insertedCount > 0
 			? `Saved successfully`

@@ -10,7 +10,6 @@ exports.getTeacher = async (_, { _id }, { headers }) => {
 			error: `You don't have enough permissions to perform this operation !!!`,
 		});
 	if (_id) return findOne(_id);
-
 	try {
 		const res = await (await client)
 			.db(`RBMI`)

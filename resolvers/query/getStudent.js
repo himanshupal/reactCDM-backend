@@ -19,7 +19,7 @@ const findStudent = async (studentId) => {
 			.aggregate([
 				{
 					$match: {
-						studentId,
+						_id: studentId,
 					},
 				},
 				{

@@ -1,5 +1,10 @@
-const { ApolloServer, UserInputError } = require(`apollo-server`),
-	{ MongoClient } = require(`mongodb`);
+const {
+		ApolloServer,
+		UserInputError,
+		ForbiddenError,
+		AuthenticationError,
+	} = require(`apollo-server`),
+	{ MongoClient, ObjectID } = require(`mongodb`);
 
 exports.client = new MongoClient(process.env.mongo_local, {
 	useNewUrlParser: true,
@@ -8,7 +13,10 @@ exports.client = new MongoClient(process.env.mongo_local, {
 	.connect()
 	.catch((err) => console.error(err));
 
+exports.ObjectId = ObjectID;
 exports.Error = UserInputError;
+exports.Forbidden = ForbiddenError;
+exports.AuthError = AuthenticationError;
 
 const typeDefs = require(`./typeDefs`),
 	resolvers = require(`./resolvers/index`);

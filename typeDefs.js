@@ -119,14 +119,26 @@ module.exports = gql`
 		data: [AttendenceInput]
 	}
 
+	input DayInput {
+		date: Int
+		month: Int
+		year: Int
+	}
 	input AttendenceInput {
-		_id: ID #Date
+		day: DayInput
 		class: String
 		holiday: Boolean
 		students: [String]
 	}
+
+	type Day {
+		date: Int
+		month: Int
+		year: Int
+	}
 	type AttendenceClass {
-		_id: ID #Date
+		_id: ID
+		day: Day
 		holiday: Boolean
 		totalStudents: Int
 		students: [String]
@@ -263,6 +275,11 @@ module.exports = gql`
 		getStudent(_id: ID): Student
 		getTeacher(_id: ID): [Teacher]
 		getAttendence(_id: String): AttendenceDay
+		getFullMonthAttendence(
+			month: Int!
+			year: Int
+			class: String
+		): [AttendenceDay]
 		getClass(_id: ID, department: String): [Class]
 	}
 	type Mutation {
@@ -273,7 +290,7 @@ module.exports = gql`
 		addStudent(input: StudentInput): String
 		addSubject(input: SubjectInput): String
 		addTeacher(input: TeacherInput): String
-		addAttendence(input: AttendenceInput): String
+		addAttendence(data: AttendenceInput): String
 
 		updateClass(input: ClassInput): String
 		updateStudent(input: StudentInput): String

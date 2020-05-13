@@ -1,4 +1,4 @@
-const { client, Error } = require(`../../index`),
+const { client, Error, ObjectId } = require(`../../index`),
 	{ CheckAuth } = require(`../../checkAuth`);
 
 exports.getAttendence = async (_, { _id }, { headers }) => {
@@ -18,7 +18,7 @@ exports.getAttendence = async (_, { _id }, { headers }) => {
 			.aggregate([
 				{
 					$match: {
-						_id,
+						_id: ObjectId(_id),
 					},
 				},
 				{

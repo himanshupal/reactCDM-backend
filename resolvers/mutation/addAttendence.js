@@ -1,40 +1,50 @@
-const { client, Error } = require(`../../index`),
+const { client, Error, Forbidden } = require(`../../index`),
 	{ CheckAuth } = require(`../../checkAuth`);
 
-exports.addAttendence = async (_, { input }) => {
+exports.addAttendence = async (_, { data }, { headers }) => {
+	try {
+		connection = await client;
+	} catch {
+		throw new Error(`Server error !!!`, {
+			error: `There is a problem connecting to database. Contact Admin.`,
+		});
+	}
 	user = CheckAuth(headers.authorization);
 	if (
 		user.access !==
 		(`Head of Department` || `Assistant Professor` || `Associate Professor`)
 	)
-		throw new Error(`Access Denied !!!`, {
-			error: `You don't have enough permissions to perform this operation !!!`,
-		});
-	if (input.holiday && input.students)
+		throw new Forbidden(`Access Denied !!!`);
+	if (data.holiday && data.students)
 		throw new Error(`It's holiday...`, {
 			error: `Cannot add students on holiday`,
 		});
-	try {
-		if (input.students) totalStudents = input.students.length;
-		else totalStudents = 0;
-		const res = await (await client)
-			.db(`RBMI`)
-			.collection(`attendence`)
-			.insertOne({
-				...input,
-				_id: `${input._id} ${input.class}`,
-				totalStudents,
-				createdAt: Date.now(),
-				createdBy: user.username,
-			});
-		return res.insertedCount > 0
-			? `Saved successfully`
-			: `There was some error saving data, please try again or contact admin ! `;
-	} catch (error) {
-		if (error.code === 11000)
-			throw new Error(`Duplicate key Error !!!`, {
-				error: `${error.keyValue._id} already exists in database, can't replace !`,
-			});
-		throw new Error(error);
-	}
+	res = await connection
+		.db(`RBMI`)
+		.collection(`attendence`)
+		.findOne({ day: data.day, class: data.class });
+	if (res)
+		throw new Error(`Already exists...`, {
+			error: `Attendence already taken by ${res.createdBy} at ${new Date(
+				res.createdAt
+			)
+				.toLocaleTimeString("en-in", {
+					weekday: "short",
+					year: "numeric",
+					month: "long",
+					day: "numeric",
+				})
+				.replace(/,/g, ``)}.`,
+		});
+	totalStudents = data.students ? data.students.length : 0;
+	res = await (await client)
+		.db(`RBMI`)
+		.collection(`attendence`)
+		.insertOne({
+			...data,
+			totalStudents,
+			createdAt: Date.now(),
+			createdBy: user.username,
+		});
+	return res.insertedId;
 };

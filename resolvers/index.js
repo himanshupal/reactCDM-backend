@@ -13,7 +13,8 @@ const { updateAttendence } = require(`./mutation/updateAttendence`),
 	{ updateSubject } = require(`./mutation/updateSubject`),
 	{ updateClass } = require(`./mutation/updateClass`);
 
-const { getAttendence } = require(`./query/getAttendence`),
+const { getFullMonthAttendence } = require(`./query/getFullMonthAttendence`),
+	{ getAttendence } = require(`./query/getAttendence`),
 	{ getTeacher } = require(`./query/getTeacher`),
 	{ getStudent } = require(`./query/getStudent`),
 	{ getClass } = require(`./query/getClass`),
@@ -26,6 +27,7 @@ module.exports = {
 		getStudent,
 		getTeacher,
 		getAttendence,
+		getFullMonthAttendence,
 	},
 	Mutation: {
 		login,

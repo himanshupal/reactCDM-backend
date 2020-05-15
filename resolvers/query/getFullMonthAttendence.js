@@ -10,7 +10,7 @@ exports.getFullMonthAttendence = async (
 		connection = await client;
 	} catch {
 		throw new Error(`Server error !!!`, {
-			error: `There is a problem connecting to database. Contact Admin.`,
+			error: `There is a problem connecting to database. Contact Admin !`,
 		});
 	}
 	user = CheckAuth(headers.authorization);
@@ -18,25 +18,25 @@ exports.getFullMonthAttendence = async (
 	res = await connection.db(`RBMI`).collection(`classes`).findOne({
 		classTeacher: user.username,
 	});
-	if (!res)
-		throw new Error(`No class Assigned !!!`, {
-			error: `It seems like you are not currently assigned as Class Teacher for any Class.`,
-		});
-	if (user.access === `Head of Department` || `Director`) {
-		if ((clas && !year) || (year && !clas))
-			throw new Error(`Insufficient data !!!`, {
-				error: `You must provide month & year to get record of another class.`,
+	if (!res) {
+		if (user.access !== (`Head of Department` || `Director`))
+			throw new Error(`No class Assigned !!!`, {
+				error: `It seems like you are not currently assigned as Class Teacher for any Class`,
 			});
-	} else throw new Forbidden(`Access Denied !!!`);
-	res = await connection
+		else if (!clas)
+			throw new Error(`Insufficient data !!!`, {
+				error: `You must provide a class to get attendence of`,
+			});
+	}
+	return await connection
 		.db(`RBMI`)
 		.collection(`attendence`)
 		.aggregate([
 			{
 				$match: {
-					"day.month": month,
+					"day.month": month || new Date().getMonth(),
 					"day.year": year || new Date().getFullYear(),
-					class: clas || res.className,
+					class: clas || res._id.toString(),
 				},
 			},
 			{
@@ -49,5 +49,4 @@ exports.getFullMonthAttendence = async (
 			},
 		])
 		.toArray();
-	return res;
 };

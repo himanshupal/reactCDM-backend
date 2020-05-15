@@ -3,46 +3,43 @@ const { client, Error } = require(`../../index`),
 
 const tokenConf = {
 	algorithm: `HS512`,
-	// expiresIn: `5m`,
+	expiresIn: `6d`,
 };
-exports.login = async (_, { input }) => {
+exports.login = async (_, { data }) => {
 	try {
-		res = await (await client).db(`RBMI`).collection(`students`).findOne({
-			_id: input.username,
-			dateOfBirth: input.password,
+		connection = await client;
+	} catch {
+		throw new Error(`Server error !!!`, {
+			error: `There is a problem connecting to database. Contact Admin`,
 		});
-		if (res)
-			return {
-				username: res.name.first,
-				token: sign(
-					{
-						username: res._id,
-						access: res.role,
-					},
-					process.env.jwt_secret,
-					tokenConf
-				),
-			};
-		res = await (await client).db(`RBMI`).collection(`teachers`).findOne({
-			_id: input.username,
-			dateOfBirth: input.password,
-		});
-		if (!res)
-			throw new Error(`Not found...`, {
-				error: `No user found matching given username`,
-			});
-		return {
-			username: res.name.first,
-			token: sign(
-				{
-					username: res._id,
-					access: res.designation,
-				},
-				process.env.jwt_secret,
-				tokenConf
-			),
-		};
-	} catch (error) {
-		throw new Error(error);
 	}
+	res = await connection.db(`RBMI`).collection(`students`).findOne({
+		username: data.username,
+		dateOfBirth: data.password,
+	});
+	if (res)
+		return sign(
+			{
+				username: res.username,
+				access: `student`,
+			},
+			process.env.jwt_secret,
+			tokenConf
+		);
+	res = await connection.db(`RBMI`).collection(`teachers`).findOne({
+		username: data.username,
+		dateOfBirth: data.password,
+	});
+	if (!res)
+		throw new Error(`Not found...`, {
+			error: `No user found matching given username`,
+		});
+	return sign(
+		{
+			username: res.username,
+			access: res.designation,
+		},
+		process.env.jwt_secret,
+		tokenConf
+	);
 };

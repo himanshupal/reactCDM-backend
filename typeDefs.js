@@ -22,7 +22,6 @@ module.exports = gql`
 		ST
 		Other
 	}
-
 	input NameInputObject {
 		first: String
 		last: String
@@ -45,7 +44,7 @@ module.exports = gql`
 		state: String
 	}
 	input StudentInput {
-		_id: ID #StudentId
+		username: String
 		rollNumber: Float
 		registrationNumber: String
 		enrollmentNumber: Float
@@ -66,7 +65,6 @@ module.exports = gql`
 		contactNumber: String
 		dateOfLeaving: String
 	}
-
 	type Name {
 		first: String
 		last: String
@@ -89,7 +87,8 @@ module.exports = gql`
 		state: String
 	}
 	type Student {
-		_id: ID #StudentId
+		_id: ID
+		username: String
 		rollNumber: Float
 		registrationNumber: String
 		enrollmentNumber: Float
@@ -113,12 +112,10 @@ module.exports = gql`
 		createdAt: Float
 		lastUpdated: Float
 	}
-
 	input AttendenceInputBulk {
 		class: String
 		data: [AttendenceInput]
 	}
-
 	input DayInput {
 		date: Int
 		month: Int
@@ -127,10 +124,13 @@ module.exports = gql`
 	input AttendenceInput {
 		day: DayInput
 		class: String
-		holiday: Boolean
+		holiday: String
 		students: [String]
 	}
-
+	input AttendenceUpdateInput {
+		holiday: String
+		students: [String]
+	}
 	type Day {
 		date: Int
 		month: Int
@@ -139,33 +139,42 @@ module.exports = gql`
 	type AttendenceClass {
 		_id: ID
 		day: Day
-		holiday: Boolean
+		holiday: String
 		totalStudents: Int
 		students: [String]
 		createdAt: Float
+		createdBy: String
 		lastUpdated: Float
 	}
 	type AttendenceDay {
-		holiday: Boolean
+		_id: ID
+		day: Day
+		holiday: String
 		totalStudents: Int
 		students: [Student]
 		createdAt: Float
+		createdBy: String
 		lastUpdated: Float
 	}
-
 	input ClassInput {
-		_id: ID #Batch
-		sessionStart: String
-		sessionEnd: String
-		className: String
+		sessionStart: DayInput
+		sessionEnd: DayInput
+		class: String
+		year: Int
+		semester: Int
+		batch: Int
 		department: String
 		classTeacher: String
 	}
 	type Class {
-		_id: ID #Batch
-		sessionStart: String
-		sessionEnd: String
-		className: String
+		_id: ID
+		sessionStart: Day
+		sessionEnd: Day
+		class: String
+		year: Int
+		semester: Int
+		batch: Int
+		alias: String
 		totalStudents: Int
 		department: String
 		timeTable: [Subject]
@@ -173,30 +182,32 @@ module.exports = gql`
 		attendence: [AttendenceClass]
 		students: [Student]
 		createdAt: Float
+		createdBy: String
 		lastUpdated: Float
 	}
-
 	input SubjectInput {
-		_id: String
-		class: String
 		name: String
+		subjectCode: String
+		uniSubjectCode: String
+		classRef: String
 		teacher: String
 		from: String
 		to: String
 	}
 	type Subject {
-		_id: String
-		class: String
+		_id: ID
 		name: String
+		uniSubjectCode: String
+		classRef: String
 		teacher: String
 		from: String
 		to: String
 		createdAt: Float
+		createdBy: String
 		lastUpdated: Float
 	}
-
 	input TeacherInput {
-		_id: ID #TeacherId
+		username: String
 		designation: String
 		registrationNumber: String
 		name: NameInputObject
@@ -217,7 +228,8 @@ module.exports = gql`
 		dateOfLeaving: String
 	}
 	type Teacher {
-		_id: ID #TeacherId
+		_id: ID
+		username: String
 		designation: String
 		registrationNumber: String
 		name: Name
@@ -237,66 +249,54 @@ module.exports = gql`
 		contactNumber: String
 		dateOfJoining: String
 		dateOfLeaving: String
-		classTeacherOf: String
+		classTeacherOf: Class
 		createdAt: Float
+		createdBy: String
 		lastUpdated: Float
 	}
-
 	input GistInput {
-		creator: String
 		subject: String
 		description: String
 		scope: String
 	}
-
 	type Gist {
 		_id: ID
-		creator: String
 		subject: String
 		description: String
 		scope: String
 		createdAt: Float
-		lastUpdated: Float
+		createdBy: String
 	}
-
 	input LoginInput {
 		username: String
 		password: String
 		otk: String
 	}
-
-	type Login {
-		username: String
-		token: String
-	}
-
 	type Query {
-		getGist(_id: ID): [Gist]
-		getStudent(_id: ID): Student
-		getTeacher(_id: ID): [Teacher]
-		getAttendence(_id: String): AttendenceDay
 		getFullMonthAttendence(
-			month: Int!
+			month: Int
 			year: Int
 			class: String
 		): [AttendenceDay]
-		getClass(_id: ID, department: String): [Class]
+		getGist(id: ID): [Gist]
+		getStudent(id: ID): Student
+		getTeacher(id: ID): [Teacher]
+		getAttendence(id: ID!): AttendenceDay
+		getClass(id: ID, department: String): [Class]
 	}
 	type Mutation {
-		login(input: LoginInput): Login
-
-		createGist(input: GistInput): String
-		addClass(input: ClassInput): String
-		addStudent(input: StudentInput): String
-		addSubject(input: SubjectInput): String
-		addTeacher(input: TeacherInput): String
+		login(data: LoginInput): String
+		addClass(data: ClassInput): String
+		createGist(data: GistInput): String
+		addStudent(data: StudentInput): String
+		addSubject(data: SubjectInput): String
+		addTeacher(data: TeacherInput): String
 		addAttendence(data: AttendenceInput): String
-
-		updateClass(input: ClassInput): String
-		updateStudent(input: StudentInput): String
-		updateTeacher(input: TeacherInput): String
-		updateSubject(input: SubjectInput): String
-		updateAttendence(input: AttendenceInput): String
-		addAttendenceBulk(input: AttendenceInputBulk): String
+		updateClass(id: ID!, data: ClassInput): String
+		updateStudent(id: ID!, data: StudentInput): String
+		updateTeacher(id: ID!, data: TeacherInput): String
+		updateSubject(id: ID!, data: SubjectInput): String
+		addAttendenceMany(data: AttendenceInputBulk): String
+		updateAttendence(id: ID!, data: AttendenceUpdateInput!): String
 	}
 `;

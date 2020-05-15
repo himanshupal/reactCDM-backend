@@ -1,24 +1,24 @@
 {
-  "name": "graphql-cdm",
-  "version": "0.1.0",
-  "description": "College data management backend using graphQl",
-  "main": "index.js",
-  "scripts": {
-    "start": "dotenv nodemon index.js"
-  },
-  "keywords": [
-    "graphql",
-    "college"
-  ],
-  "author": "Himanshu Pal et. al.",
-  "license": "GPL-3.0-or-later",
-  "dependencies": {
-    "apollo-server": "^2.12.0",
-    "graphql": "^15.0.0",
-    "jsonwebtoken": "^8.5.1",
-    "mongodb": "^3.5.6"
-  },
-  "devDependencies": {
-    "nodemon": "^2.0.3"
-  }
+	"name": "graphql-cdm",
+	"version": "0.1.1",
+	"description": "College data management backend using graphQl",
+	"main": "index.js",
+	"scripts": {
+		"start": "dotenv nodemon index.js"
+	},
+	"keywords": [
+		"graphql",
+		"college"
+	],
+	"author": "Himanshu Pal et. al.",
+	"license": "GPL-3.0-or-later",
+	"dependencies": {
+		"apollo-server": "^2.12.0",
+		"graphql": "^15.0.0",
+		"jsonwebtoken": "^8.5.1",
+		"mongodb": "^3.5.6"
+	},
+	"devDependencies": {
+		"nodemon": "^2.0.3"
+	}
 }

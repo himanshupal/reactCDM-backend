@@ -1,4 +1,4 @@
-const { client, Error, Forbidden } = require(`../../index`),
+const { client, Error, ObjectId, Forbidden } = require(`../../index`),
 	{ CheckAuth } = require(`../../checkAuth`);
 
 exports.addAttendence = async (_, { data }, { headers }) => {
@@ -6,7 +6,7 @@ exports.addAttendence = async (_, { data }, { headers }) => {
 		connection = await client;
 	} catch {
 		throw new Error(`Server error !!!`, {
-			error: `There is a problem connecting to database. Contact Admin.`,
+			error: `There is a problem connecting to database. Contact Admin !`,
 		});
 	}
 	user = CheckAuth(headers.authorization);
@@ -34,10 +34,10 @@ exports.addAttendence = async (_, { data }, { headers }) => {
 					month: "long",
 					day: "numeric",
 				})
-				.replace(/,/g, ``)}.`,
+				.replace(/,/g, ``)}`,
 		});
 	totalStudents = data.students ? data.students.length : 0;
-	res = await (await client)
+	res = await connection
 		.db(`RBMI`)
 		.collection(`attendence`)
 		.insertOne({

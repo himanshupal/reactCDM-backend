@@ -1,4 +1,4 @@
-const { addAttendenceBulk } = require(`./mutation/addAttendenceBulk`),
+const { addAttendenceMany } = require(`./mutation/addAttendenceMany`),
 	{ addAttendence } = require(`./mutation/addAttendence`),
 	{ addTeacher } = require(`./mutation/addTeacher`),
 	{ addStudent } = require(`./mutation/addStudent`),
@@ -37,7 +37,7 @@ module.exports = {
 		addSubject,
 		addTeacher,
 		createGist,
-		addAttendenceBulk,
+		addAttendenceMany,
 
 		updateClass,
 		addAttendence,

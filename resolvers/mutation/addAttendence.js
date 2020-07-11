@@ -1,50 +1,59 @@
-const { client, Error, ObjectId, Forbidden } = require(`../../index`),
-	{ CheckAuth } = require(`../../checkAuth`);
+const { UserInputError, ForbiddenError } = require(`apollo-server`),
+	authenticate = require(`../../checkAuth`),
+	{ MongoClient } = require(`mongodb`),
+	accessAllowed = [
+		`Head of Department`,
+		`Assosiate Professor`,
+		`Assistant Professor`,
+	];
 
-exports.addAttendence = async (_, { data }, { headers }) => {
+module.exports = async (_, { data }, { authorization }) => {
+	const client = new MongoClient(process.env.mongo_local, {
+		keepAlive: false,
+		useNewUrlParser: true,
+		useUnifiedTopology: true,
+	});
 	try {
-		connection = await client;
-	} catch {
-		throw new Error(`Server error !!!`, {
-			error: `There is a problem connecting to database. Contact Admin !`,
-		});
+		await client.connect();
+		const user = await authenticate(authorization);
+		if (!accessAllowed.includes(user.access))
+			throw new ForbiddenError(`Access Denied !`);
+		if (data.holiday && data.students)
+			throw new UserInputError(`It's holiday`, {
+				error: `Cannot add students on holiday`,
+			});
+		const check = await client
+			.db(`RBMI`)
+			.collection(`attendence`)
+			.findOne({ day: data.day, class: data.class });
+		if (check)
+			throw new UserInputError(`Already exists !`, {
+				error: `Attendence already taken by ${res.createdBy} at ${new Date(
+					res.createdAt
+				)
+					.toLocaleTimeString("en-in", {
+						weekday: "short",
+						year: "numeric",
+						month: "long",
+						day: "numeric",
+					})
+					.replace(/,/g, ``)}`,
+			});
+		const res = await client
+			.db(`RBMI`)
+			.collection(`attendence`)
+			.insertOne({
+				...data,
+				totalStudents: data.students ? data.students.length : 0,
+				createdAt: Date.now(),
+				createdBy: user.username,
+			});
+		return res.insertedCount > 0
+			? `Attendence saved successfully`
+			: `There was some error saving data, please try again or contact admin !`;
+	} catch (error) {
+		return error;
+	} finally {
+		await client.close();
 	}
-	user = CheckAuth(headers.authorization);
-	if (
-		user.access !==
-		(`Head of Department` || `Assistant Professor` || `Associate Professor`)
-	)
-		throw new Forbidden(`Access Denied !!!`);
-	if (data.holiday && data.students)
-		throw new Error(`It's holiday...`, {
-			error: `Cannot add students on holiday`,
-		});
-	res = await connection
-		.db(`RBMI`)
-		.collection(`attendence`)
-		.findOne({ day: data.day, class: data.class });
-	if (res)
-		throw new Error(`Already exists...`, {
-			error: `Attendence already taken by ${res.createdBy} at ${new Date(
-				res.createdAt
-			)
-				.toLocaleTimeString("en-in", {
-					weekday: "short",
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-				})
-				.replace(/,/g, ``)}`,
-		});
-	totalStudents = data.students ? data.students.length : 0;
-	res = await connection
-		.db(`RBMI`)
-		.collection(`attendence`)
-		.insertOne({
-			...data,
-			totalStudents,
-			createdAt: Date.now(),
-			createdBy: user.username,
-		});
-	return res.insertedId;
 };

@@ -1,45 +1,51 @@
-const { client, Error } = require(`../../index`),
-	{ sign } = require(`jsonwebtoken`);
+const { UserInputError } = require(`apollo-server`),
+	{ MongoClient } = require(`mongodb`),
+	{ sign } = require(`jsonwebtoken`),
+	tokenConf = {
+		algorithm: `HS512`,
+		expiresIn: `6d`,
+	};
 
-const tokenConf = {
-	algorithm: `HS512`,
-	expiresIn: `6d`,
-};
-exports.login = async (_, { data }) => {
-	try {
-		connection = await client;
-	} catch {
-		throw new Error(`Server error !!!`, {
-			error: `There is a problem connecting to database. Contact Admin`,
-		});
-	}
-	res = await connection.db(`RBMI`).collection(`students`).findOne({
-		username: data.username,
-		dateOfBirth: data.password,
+module.exports = async (_, { data: { username, password } }) => {
+	const client = new MongoClient(process.env.mongo_local, {
+		keepAlive: false,
+		useNewUrlParser: true,
+		useUnifiedTopology: true,
 	});
-	if (res)
+	try {
+		await client.connect();
+		const student = await client
+			.db(`RBMI`)
+			.collection(`students`)
+			.findOne({ username, password });
+		if (student)
+			return sign(
+				{
+					username: student.username,
+					access: `student`,
+				},
+				process.env.jwt_secret,
+				tokenConf
+			);
+		const teacher = await client
+			.db(`RBMI`)
+			.collection(`teachers`)
+			.findOne({ username, password });
+		if (!teacher)
+			throw new UserInputError(`Not found !`, {
+				error: `No user found matching given username`,
+			});
 		return sign(
 			{
-				username: res.username,
-				access: `student`,
+				username: teacher.username,
+				access: teacher.designation,
 			},
 			process.env.jwt_secret,
 			tokenConf
 		);
-	res = await connection.db(`RBMI`).collection(`teachers`).findOne({
-		username: data.username,
-		dateOfBirth: data.password,
-	});
-	if (!res)
-		throw new Error(`Not found...`, {
-			error: `No user found matching given username`,
-		});
-	return sign(
-		{
-			username: res.username,
-			access: res.designation,
-		},
-		process.env.jwt_secret,
-		tokenConf
-	);
+	} catch {
+		return error;
+	} finally {
+		await client.close();
+	}
 };

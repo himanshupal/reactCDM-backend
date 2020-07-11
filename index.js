@@ -1,34 +1,15 @@
-const {
-		ApolloServer,
-		UserInputError,
-		ForbiddenError,
-		AuthenticationError,
-	} = require(`apollo-server`),
-	{ MongoClient, ObjectID } = require(`mongodb`);
+const { ApolloServer } = require(`apollo-server`);
 
-exports.client = new MongoClient(process.env.mongo_local, {
-	useNewUrlParser: true,
-	useUnifiedTopology: true,
-})
-	.connect()
-	.catch((err) => console.error(err));
-
-exports.ObjectId = ObjectID;
-exports.Error = UserInputError;
-exports.Forbidden = ForbiddenError;
-exports.AuthError = AuthenticationError;
-
-const typeDefs = require(`./typeDefs`),
-	resolvers = require(`./resolvers/index`);
-
-new ApolloServer({
-	typeDefs,
-	resolvers,
-	context: ({ req }) => req,
-	tracing: true,
-})
-	.listen((PORT = process.env.PORT || 80))
-	.then(({ url }) => {
+(async () => {
+	try {
+		const { url } = await new ApolloServer({
+			resolvers: require(`./resolvers`),
+			typeDefs: require(`./typeDefs`),
+			context: ({ req }) => req.headers,
+			tracing: true,
+		}).listen(process.env.PORT || 80);
 		console.log(`Server ready at ${url}`);
-	})
-	.catch((err) => console.error(err));
+	} catch (error) {
+		console.error(error);
+	}
+})();

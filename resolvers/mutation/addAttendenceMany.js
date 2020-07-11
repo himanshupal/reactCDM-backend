@@ -1,55 +1,64 @@
-const { client, Error, Forbidden } = require(`../../index`),
-	{ CheckAuth } = require(`../../checkAuth`);
+const { UserInputError, ForbiddenError } = require(`apollo-server`),
+	{ MongoClient } = require(`mongodb`),
+	authenticate = require(`../../checkAuth`),
+	accessAllowed = [`Director`, `Head of Department`];
 
-exports.addAttendenceMany = async (_, { data }, { headers }) => {
-	try {
-		connection = await client;
-	} catch {
-		throw new Error(`Server error !!!`, {
-			error: `There is a problem connecting to database. Contact Admin`,
-		});
-	}
-	user = CheckAuth(headers.authorization);
-	if (user.access === `student`) throw new Forbidden(`Access Denied !!!`);
-	res = await connection.db(`RBMI`).collection(`classes`).findOne({
-		classTeacher: user.username,
+module.exports = async (_, { data }, { authorization }) => {
+	const client = new MongoClient(process.env.mongo_local, {
+		keepAlive: false,
+		useNewUrlParser: true,
+		useUnifiedTopology: true,
 	});
-	if (!res) {
-		if (user.access !== (`Head of Department` || `Director`))
-			throw new Error(`No class Assigned !!!`, {
-				error: `It seems like you are not currently assigned as Class Teacher for any Class`,
-			});
-		else if (!data.class || !data.data)
-			throw new Error(`Insufficient data !!!`, {
-				error: `You must provide a class with data to update record of a class`,
-			});
+	try {
+		await client.connect();
+		const user = await authenticate(authorization);
+		if (user.access === `student`) throw new Forbidden(`Access Denied !`);
+		const check = await client.db(`RBMI`).collection(`classes`).findOne({
+			classTeacher: user.username,
+		});
+		if (!check) {
+			if (accessAllowed.includes(user.access))
+				throw new UserInputError(
+					`No class Assigned !`,
+					`You are not currently assigned as 'Class Teacher' for any Class`
+				);
+			else if (!data.class || !data.data)
+				throw new UserInputError(
+					`Insufficient data !`,
+					`You must provide a class with data to update record of a class`
+				);
+		}
+		const res = await client
+			.db(`RBMI`)
+			.collection(`attendence`)
+			.insertMany([
+				...data.data.map((el) => {
+					if (el.holiday && el.students)
+						throw new UserInputError(
+							`It's holiday on ${el.day.date}`,
+							`Cannot add students on holiday`
+						);
+					return {
+						day: {
+							date: el.day.date,
+							month: el.day.month || new Date().getMonth(),
+							year: el.day.year || new Date().getFullYear(),
+						},
+						class: data.class || check._id.toString(),
+						holiday: el.holiday,
+						students: el.students,
+						totalStudents: el.students ? el.students.length : 0,
+						createdAt: Date.now(),
+						createdBy: user.username,
+					};
+				}),
+			]);
+		return res.insertedCount > 0
+			? `Attendence of ${res.insertedCount} days successfully saved`
+			: `There was some error saving data, please try again or contact admin !`;
+	} catch {
+		return error;
+	} finally {
+		await client.close();
 	}
-	res = await connection
-		.db(`RBMI`)
-		.collection(`attendence`)
-		.insertMany([
-			...data.data.map((el) => {
-				if (el.holiday && el.students)
-					throw new Error(`It's holiday on ${el.day.date}`, {
-						error: `Cannot add students on holiday`,
-					});
-				totalStudents = el.students ? el.students.length : 0;
-				return {
-					day: {
-						date: el.day.date,
-						month: el.day.month || new Date().getMonth(),
-						year: el.day.year || new Date().getFullYear(),
-					},
-					class: data.class || res._id,
-					holiday: el.holiday,
-					students: el.students,
-					totalStudents,
-					createdAt: Date.now(),
-					createdBy: user.username,
-				};
-			}),
-		]);
-	return res.insertedCount > 0
-		? `Attendence of ${res.insertedCount} days successfully saved`
-		: `There was some error saving data, please try again or contact admin !`;
 };

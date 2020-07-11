@@ -1,27 +1,6 @@
 const { gql } = require(`apollo-server`);
 
 module.exports = gql`
-	enum Gender {
-		Male
-		Female
-		Other
-	}
-	enum Religion {
-		Hinduism
-		Islam
-		Sikhism
-		Christianity
-		Jainism
-		Buddhism
-		Other
-	}
-	enum Caste {
-		General
-		OBC
-		SC
-		ST
-		Other
-	}
 	input NameInputObject {
 		first: String
 		last: String
@@ -29,7 +8,7 @@ module.exports = gql`
 	input ParentInputObject {
 		name: String
 		occupation: String
-		annualSalary: Int
+		annualSalary: String
 		contactNumber: String
 	}
 	input AddressInputObject {
@@ -40,23 +19,20 @@ module.exports = gql`
 		locality: String
 		district: String
 		city: String
-		pincode: Int
-		state: String
 	}
 	input StudentInput {
 		username: String
-		rollNumber: Float
+		rollNumber: String
 		registrationNumber: String
-		enrollmentNumber: Float
+		enrollmentNumber: String
 		name: NameInputObject
 		father: ParentInputObject
 		mother: ParentInputObject
 		bloodGroup: String
-		gender: Gender
-		caste: Caste
+		gender: String
+		caste: String
 		class: String
-		role: String
-		religion: Religion
+		religion: String
 		dateOfBirth: String
 		address: AddressInputObject
 		aadharNumber: String
@@ -89,22 +65,21 @@ module.exports = gql`
 	type Student {
 		_id: ID
 		username: String
-		rollNumber: Float
+		rollNumber: String
 		registrationNumber: String
-		enrollmentNumber: Float
+		enrollmentNumber: String
 		name: Name
 		father: Parent
 		mother: Parent
 		bloodGroup: String
-		gender: Gender
-		caste: Caste
+		gender: String
+		caste: String
 		class: Class
-		religion: Religion
+		religion: String
 		dateOfBirth: String
 		address: Address
 		photo: String
 		email: String
-		role: String
 		attendence: [AttendenceClass]
 		aadharNumber: String
 		contactNumber: String
@@ -116,13 +91,13 @@ module.exports = gql`
 		class: String
 		data: [AttendenceInput]
 	}
-	input DayInput {
-		date: Int
-		month: Int
-		year: Int
-	}
+	# input DayInput {
+	# 	date: Int
+	# 	month: Int
+	# 	year: Int
+	# }
 	input AttendenceInput {
-		day: DayInput
+		day: String
 		class: String
 		holiday: String
 		students: [String]
@@ -157,12 +132,10 @@ module.exports = gql`
 		lastUpdated: Float
 	}
 	input ClassInput {
-		sessionStart: DayInput
-		sessionEnd: DayInput
-		class: String
-		year: Int
-		semester: Int
-		batch: Int
+		sessionStart: String
+		sessionEnd: String
+		course: String
+		batch: String
 		department: String
 		classTeacher: String
 	}
@@ -214,9 +187,9 @@ module.exports = gql`
 		father: ParentInputObject
 		mother: ParentInputObject
 		bloodGroup: String
-		gender: Gender
-		caste: Caste
-		religion: Religion
+		gender: String
+		caste: String
+		religion: String
 		dateOfBirth: String
 		address: AddressInputObject
 		aadharNumber: String
@@ -236,9 +209,9 @@ module.exports = gql`
 		father: Parent
 		mother: Parent
 		bloodGroup: String
-		gender: Gender
-		caste: Caste
-		religion: Religion
+		gender: String
+		caste: String
+		religion: String
 		dateOfBirth: String
 		address: Address
 		aadharNumber: String
@@ -272,12 +245,38 @@ module.exports = gql`
 		password: String
 		otk: String
 	}
+	input CourseInput {
+		name: String
+		duration: String
+		semesterBased: Boolean
+		director: String
+		department: String
+		headOfDepartment: String
+	}
+	type Course {
+		name: String
+		duration: String
+		semesterBased: Boolean
+		department: String
+		director: String
+		headOfDepartment: String
+		createdBy: String
+		createdAt: Float
+	}
+	type Department {
+		name: String
+		director: String
+		createdAt: Float
+		createdBy: String
+	}
 	type Query {
 		getFullMonthAttendence(
 			month: Int
 			year: Int
 			class: String
 		): [AttendenceDay]
+		getCourses(department: String): [Course]
+		getDepartments: [Department]
 		getGist(id: ID): [Gist]
 		getStudent(id: ID): Student
 		getTeacher(id: ID): [Teacher]
@@ -288,6 +287,7 @@ module.exports = gql`
 		login(data: LoginInput): String
 		addClass(data: ClassInput): String
 		createGist(data: GistInput): String
+		addCourse(data: CourseInput): String
 		addStudent(data: StudentInput): String
 		addSubject(data: SubjectInput): String
 		addTeacher(data: TeacherInput): String

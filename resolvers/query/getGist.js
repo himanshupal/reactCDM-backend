@@ -1,43 +1,45 @@
-const { client, Error, ObjectId } = require(`../../index`),
-	{ CheckAuth } = require(`../../checkAuth`);
+const { MongoClient, ObjectId } = require(`mongodb`),
+	authenticate = require(`../../checkAuth`);
 
-exports.getGist = async (_, { id }, { headers }) => {
+module.exports = async (_, { id }, { authorization }) => {
+	const client = new MongoClient(process.env.mongo_local, {
+		keepAlive: false,
+		useNewUrlParser: true,
+		useUnifiedTopology: true,
+	});
 	try {
-		connection = await client;
+		await client.connect();
+		if (!authorization)
+			return await client
+				.db(`RBMI`)
+				.collection(`gists`)
+				.find({ scope: `public` })
+				.toArray();
+		if (id)
+			return await client
+				.db(`RBMI`)
+				.collection(`gists`)
+				.find({ _id: ObjectId(id) })
+				.toArray();
+		const user = authenticate(authorization);
+		return await client
+			.db(`RBMI`)
+			.collection(`gists`)
+			.find({
+				$or: [
+					{
+						createdBy: user.username,
+						scope: `private`,
+					},
+					{
+						scope: `public`,
+					},
+				],
+			})
+			.toArray();
 	} catch {
-		throw new Error(`Server error !!!`, {
-			error: `There is a problem connecting to database. Contact Admin !`,
-		});
+		return error;
+	} finally {
+		await client.close();
 	}
-
-	if (!headers.authorization)
-		return await connection
-			.db(`RBMI`)
-			.collection(`gists`)
-			.find({ scope: `public` })
-			.toArray();
-
-	if (id)
-		return await connection
-			.db(`RBMI`)
-			.collection(`gists`)
-			.find({ _id: ObjectId(id) })
-			.toArray();
-
-	user = CheckAuth(headers.authorization);
-
-	privateGists = await connection
-		.db(`RBMI`)
-		.collection(`gists`)
-		.find({
-			createdBy: user.username,
-			scope: `private`,
-		})
-		.toArray();
-	publicGists = await connection
-		.db(`RBMI`)
-		.collection(`gists`)
-		.find({ scope: `public` })
-		.toArray();
-	return [...privateGists, `x`, ...publicGists];
 };

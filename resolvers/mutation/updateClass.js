@@ -1,43 +1,55 @@
-const { client, Error, ObjectId, Forbidden } = require(`../../index`),
-	{ CheckAuth } = require(`../../checkAuth`);
+const { ForbiddenError, UserInputError } = require(`apollo-server`),
+	{ MongoClient } = require(`mongodb`),
+	authenticate = require(`../../checkAuth`),
+	accessAllowed = [`Director`, `Head of Department`];
 
-exports.updateClass = async (_, { id, data }, { headers }) => {
+module.exports = async (_, { id, data }, { authorization }) => {
+	const client = new MongoClient(process.env.mongo_local, {
+		keepAlive: false,
+		useNewUrlParser: true,
+		useUnifiedTopology: true,
+	});
 	try {
-		connection = await client;
-	} catch {
-		throw new Error(`Server error !!!`, {
-			error: `There is a problem connecting to database. Contact Admin !`,
-		});
-	}
-	user = CheckAuth(headers.authorization);
-	if (user.access !== (`Head of Department` || `Director`))
-		throw new Forbidden(`Access Denied !!!`);
-	res = await connection
-		.db(`RBMI`)
-		.collection(`classes`)
-		.findOne({
-			_id: ObjectId(id),
-		});
-	alias = `${data.class || res.class}, Year ${data.year || res.year} Sem ${
-		data.semester || res.semester
-	}`;
-	res = await connection
-		.db(`RBMI`)
-		.collection(`classes`)
-		.updateOne(
-			{
+		await client.connect();
+		const user = await authenticate(authorization);
+		if (accessAllowed.includes(user.access))
+			throw new ForbiddenError(`Access Denied !`);
+		const check = await client
+			.db(`RBMI`)
+			.collection(`classes`)
+			.findOne({
 				_id: ObjectId(id),
-			},
-			{
-				$set: {
-					...data,
-					alias,
-					lastUpdated: Date.now(),
-					lastUpdatedBy: user.username,
+			});
+		if (!check)
+			throw new UserInputError(
+				`Not found !`,
+				`Couldn't find any class with given details`
+			);
+		const alias = `${data.class || check.class}, Year ${
+			data.year || check.year
+		} Sem ${data.semester || check.semester}`;
+		const res = await client
+			.db(`RBMI`)
+			.collection(`classes`)
+			.updateOne(
+				{
+					_id: ObjectId(id),
 				},
-			}
-		);
-	return res.modifiedCount > 0
-		? `Class updated !`
-		: `Error saving data. Please try again or contact admin if issue persists`;
+				{
+					$set: {
+						...data,
+						alias,
+						lastUpdated: Date.now(),
+						lastUpdatedBy: user.username,
+					},
+				}
+			);
+		return res.modifiedCount > 0
+			? `Class updated !`
+			: `Error saving data. Please try again or contact admin if issue persists`;
+	} catch {
+		return error;
+	} finally {
+		await client.close();
+	}
 };

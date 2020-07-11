@@ -1,55 +1,62 @@
-const { client, Error, ObjectId, Forbidden } = require(`../../index`),
-	{ CheckAuth } = require(`../../checkAuth`);
+const { ForbiddenError, UserInputError } = require(`apollo-server`),
+	{ MongoClient, ObjectId } = require(`mongodb`),
+	authenticate = require(`../../checkAuth`);
 
-exports.getStudent = async (_, { id }, { headers }) => {
+module.exports = async (_, { id }, { authorization }) => {
+	const client = new MongoClient(process.env.mongo_local, {
+		keepAlive: false,
+		useNewUrlParser: true,
+		useUnifiedTopology: true,
+	});
 	try {
-		connection = await client;
+		await client.connect();
+		const user = authenticate(authorization);
+		if (user.access === `student` && id)
+			throw new ForbiddenError(`Access Denied !`);
+		const res = await client
+			.db(`RBMI`)
+			.collection(`students`)
+			.aggregate([
+				{
+					$match: {
+						$or: [
+							{
+								_id: ObjectId(id),
+							},
+							{
+								username: user.username,
+							},
+						],
+					},
+				},
+				{
+					$lookup: {
+						from: `attendence`,
+						localField: `username`,
+						foreignField: `students`,
+						as: `attendence`,
+					},
+				},
+				{
+					$addFields: { class: { $toObjectId: `$class` } },
+				},
+				{
+					$lookup: {
+						from: `classes`,
+						localField: `class`,
+						foreignField: `_id`,
+						as: `class`,
+					},
+				},
+				{
+					$unwind: `$class`,
+				},
+			])
+			.toArray();
+		return res[0];
 	} catch {
-		throw new Error(`Server error !!!`, {
-			error: `There is a problem connecting to database. Contact Admin`,
-		});
+		return error;
+	} finally {
+		await client.close();
 	}
-	user = CheckAuth(headers.authorization);
-	if (user.access === `student` && id) throw new Forbidden(`Access Denied !!!`);
-	res = await connection
-		.db(`RBMI`)
-		.collection(`students`)
-		.aggregate([
-			{
-				$match: {
-					$or: [
-						{
-							_id: ObjectId(id),
-						},
-						{
-							username: user.username,
-						},
-					],
-				},
-			},
-			{
-				$lookup: {
-					from: `attendence`,
-					localField: `username`,
-					foreignField: `students`,
-					as: `attendence`,
-				},
-			},
-			{
-				$addFields: { class: { $toObjectId: `$class` } },
-			},
-			{
-				$lookup: {
-					from: `classes`,
-					localField: `class`,
-					foreignField: `_id`,
-					as: `class`,
-				},
-			},
-			{
-				$unwind: `$class`,
-			},
-		])
-		.toArray();
-	return res[0];
 };

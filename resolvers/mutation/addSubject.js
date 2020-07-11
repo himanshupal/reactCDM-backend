@@ -1,34 +1,41 @@
-const { client, Error, Forbidden } = require(`../../index`),
-	{ CheckAuth } = require(`../../checkAuth`);
+const { UserInputError, ForbiddenError } = require(`apollo-server`),
+	{ MongoClient } = require(`mongodb`),
+	authenticate = require(`../../checkAuth`),
+	accessAllowed = [`Director`, `Head of Department`, `Associate Professor`];
 
-exports.addSubject = async (_, { data }, { headers }) => {
+module.exports = async (_, { data }, { authorization }) => {
+	const client = new MongoClient(process.env.mongo_local, {
+		keepAlive: false,
+		useNewUrlParser: true,
+		useUnifiedTopology: true,
+	});
 	try {
-		connection = await client;
+		await client.connect();
+		const user = await authenticate(authorization);
+		if (!accessAllowed.includes(user.access))
+			throw new ForbiddenError(`Access Denied !`);
+		const check = await client
+			.db(`RBMI`)
+			.collection(`subjects`)
+			.findOne({ subjectCode: data.subjectCode });
+		if (check)
+			throw new UserInputError(`Already exists...`, {
+				error: `Subject ${res.name} with code ${res.subjectCode} already exists !`,
+			});
+		const res = await client
+			.db(`RBMI`)
+			.collection(`subjects`)
+			.insertOne({
+				...data,
+				createdAt: Date.now(),
+				createdBy: user.username,
+			});
+		return res.insertedCount > 0
+			? `Subject ${data.subjectCode} saved successfully`
+			: `There was some error saving data, please try again or contact admin if issue persists`;
 	} catch {
-		throw new Error(`Server error !!!`, {
-			error: `There is a problem connecting to database. Contact Admin`,
-		});
+		return error;
+	} finally {
+		await client.close();
 	}
-	user = CheckAuth(headers.authorization);
-	if (user.access !== (`Head of Department` || `Director`))
-		throw new Forbidden(`Access Denied !!!`);
-	res = await connection
-		.db(`RBMI`)
-		.collection(`subjects`)
-		.findOne({ subjectCode: data.subjectCode });
-	if (res)
-		throw new Error(`Already exists...`, {
-			error: `Subject ${res.name} with code ${res.subjectCode} already exists !`,
-		});
-	res = await connection
-		.db(`RBMI`)
-		.collection(`subjects`)
-		.insertOne({
-			...data,
-			createdAt: Date.now(),
-			createdBy: user.username,
-		});
-	return res.insertedCount > 0
-		? `Subject ${data.subjectCode} saved successfully`
-		: `There was some error saving data, please try again or contact admin if issue persists`;
 };

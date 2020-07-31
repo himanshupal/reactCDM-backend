@@ -3,6 +3,8 @@ const { ApolloServer } = require(`apollo-server`);
 (async () => {
 	try {
 		const { url } = await new ApolloServer({
+			playground: true,
+			introspection: true,
 			resolvers: require(`./resolvers`),
 			typeDefs: require(`./typeDefs`),
 			context: ({ req }) => req.headers,

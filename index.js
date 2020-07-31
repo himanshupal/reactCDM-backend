@@ -7,6 +7,7 @@ const { ApolloServer } = require(`apollo-server`);
 			typeDefs: require(`./typeDefs`),
 			context: ({ req }) => req.headers,
 			tracing: true,
+			cors: true,
 		}).listen(process.env.PORT || 80);
 		console.log(`Server ready at ${url}`);
 	} catch (error) {

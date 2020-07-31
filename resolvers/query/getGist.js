@@ -1,43 +1,32 @@
 const { MongoClient, ObjectId } = require(`mongodb`),
 	authenticate = require(`../../checkAuth`);
 
-module.exports = async (_, { id }, { authorization }) => {
-	const client = new MongoClient(process.env.mongo_local, {
+module.exports = async (_, { gid }, { authorization }) => {
+	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
 		useUnifiedTopology: true,
 	});
 	try {
 		await client.connect();
-		if (!authorization)
-			return await client
-				.db(`RBMI`)
-				.collection(`gists`)
-				.find({ scope: `public` })
-				.toArray();
-		if (id)
-			return await client
-				.db(`RBMI`)
-				.collection(`gists`)
-				.find({ _id: ObjectId(id) })
-				.toArray();
-		const user = authenticate(authorization);
-		return await client
-			.db(`RBMI`)
-			.collection(`gists`)
+		const user = await authenticate(authorization);
+		const node = client.db(`RBMI`).collection(`gists`);
+		if (gid) return await node.find({ _id: ObjectId(gid) }).toArray();
+		if (!authorization) return await node.find({ scope: `Public` }).toArray();
+		return await node
 			.find({
 				$or: [
 					{
 						createdBy: user.username,
-						scope: `private`,
+						scope: `Private`,
 					},
 					{
-						scope: `public`,
+						scope: `Public`,
 					},
 				],
 			})
 			.toArray();
-	} catch {
+	} catch (error) {
 		return error;
 	} finally {
 		await client.close();

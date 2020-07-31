@@ -1,52 +1,44 @@
 const { UserInputError, ForbiddenError } = require(`apollo-server`),
-	{ MongoClient } = require(`mongodb`),
-	authenticate = require(`../../checkAuth`);
+	{ MongoClient, ObjectId } = require(`mongodb`);
 
-module.exports = async (_, { id, data }, { authorization }) => {
-	const client = new MongoClient(process.env.mongo_local, {
+const authenticate = require(`../../checkAuth`),
+	accessAllowed = [`Director`, `Head of Department`, `Assosiate Professor`, `Assistant Professor`];
+
+module.exports = async (_, { aid, data }, { authorization }) => {
+	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
 		useUnifiedTopology: true,
 	});
 	try {
 		await client.connect();
-		user = authenticate(authorization);
-		if (user.access === `student`) throw new ForbiddenError(`Access Denied !`);
+		const user = await authenticate(authorization);
+		const node = client.db(`RBMI`).collection(`attendence`);
+		if (!accessAllowed.includes(user.access)) throw new ForbiddenError(`Access Denied ⚠`);
 		if (data.holiday && data.students)
-			throw new UserInputError(
-				`It's holiday...`,
-				`Cannot add students on holiday`
-			);
-		const check = await client
-			.db(`RBMI`)
-			.collection(`attendence`)
-			.findOne({ _id: ObjectId(id) });
-		if (!check)
-			throw new UserInputError(
-				`Not found !`,
-				`Couldn't find attendence data you are trying to update`
-			);
+			throw new UserInputError(`It's holiday ⚠`, {
+				error: `Cannot add students on holiday.`,
+			});
+		const check = await node.findOne({ _id: ObjectId(aid) });
+		if (!check) throw new UserInputError(`Not found ⚠`, { error: `Couldn't find attendence data you are trying to update` });
 		if (data.holiday) data.students = null;
 		if (data.students) data.holiday = null;
-		const res = await client
-			.db(`RBMI`)
-			.collection(`attendence`)
-			.updateOne(
-				{
-					_id: ObjectId(id),
+		const res = await node.updateOne(
+			{
+				_id: ObjectId(aid),
+			},
+			{
+				$set: {
+					...data,
+					totalStudents: data.students ? data.students.length : 0,
+					updatedAt: Date.now(),
+					updatedBy: user.username,
 				},
-				{
-					$set: {
-						...data,
-						totalStudents: data.students ? data.students.length : 0,
-						lastUpdated: Date.now(),
-						lastUpdatedBy: user.username,
-					},
-				}
-			);
+			}
+		);
 		return res.modifiedCount > 0
-			? `Attendence updated !`
-			: `Error saving data. Please try again or contact admin if issue persists`;
+			? `Attendence updated successfully ✔`
+			: `There was some error saving data. Please try again or contact admin if issue persists.`;
 	} catch {
 		return error;
 	} finally {

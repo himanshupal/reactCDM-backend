@@ -11,7 +11,7 @@ module.exports = {
 		// courses: require(`${query}getCourse`),
 		classes: require(`${query}classes`),
 		class: require(`${query}getClass`),
-		gists: require(`${query}getGist`),
+		notes: require(`${query}notes`),
 	},
 	Mutation: {
 		addAttendenceMany: require(`${mutation}addAttendenceMany`),
@@ -27,8 +27,8 @@ module.exports = {
 		addTeacher: require(`${mutation}addTeacher`),
 		addStudent: require(`${mutation}addStudent`),
 		addSubject: require(`${mutation}addSubject`),
-		createGist: require(`${mutation}createGist`),
 		addCourse: require(`${mutation}addCourse`),
+		createNote: require(`${mutation}addNote`),
 		login: require(`${mutation}login`),
 	},
 };

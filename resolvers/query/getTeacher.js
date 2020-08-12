@@ -4,7 +4,7 @@ const { ForbiddenError, UserInputError } = require(`apollo-server`),
 const authenticate = require(`../../checkAuth`),
 	accessAllowed = [`Director`, `Head of Department`, `Associate Professor`, `Assistant Professor`];
 
-module.exports = async (_, { tid }, { authorization }) => {
+module.exports = async (_, { department, teacher }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -15,18 +15,23 @@ module.exports = async (_, { tid }, { authorization }) => {
 		const user = await authenticate(authorization);
 		const node = client.db(`RBMI`).collection(`teachers`);
 		if (!accessAllowed.includes(user.access)) throw new ForbiddenError(`Access Denied ⚠`);
-		if (tid)
+		if (!department && !teacher)
+			throw new UserInputError(`Insufficient data ⚠`, {
+				error: `You must provide either a department or teacher's ID to get details of.`,
+			});
+		if (teacher)
 			return await node
 				.aggregate([
 					{
 						$match: {
-							_id: ObjectId(tid),
+							_id: ObjectId(teacher),
 						},
 					},
+					{ $addFields: { _id: { $toString: `$_id` } } },
 					{
 						$lookup: {
 							from: `classes`,
-							localField: `username`,
+							localField: `_id`,
 							foreignField: `classTeacher`,
 							as: `classTeacherOf`,
 						},
@@ -34,22 +39,47 @@ module.exports = async (_, { tid }, { authorization }) => {
 					{
 						$lookup: {
 							from: `subjects`,
-							localField: `username`,
+							localField: `_id`,
 							foreignField: `teacher`,
 							as: `teaches`,
 						},
 					},
+				])
+				.toArray();
+		if (department)
+			return await node
+				.aggregate([
 					{
-						$unwind: `$classTeacherOf`,
+						$match: {
+							department,
+						},
+					},
+					{ $addFields: { _id: { $toString: `$_id` } } },
+					{
+						$lookup: {
+							from: `classes`,
+							localField: `_id`,
+							foreignField: `classTeacher`,
+							as: `classTeacherOf`,
+						},
+					},
+					{
+						$lookup: {
+							from: `subjects`,
+							localField: `_id`,
+							foreignField: `teacher`,
+							as: `teaches`,
+						},
 					},
 				])
 				.toArray();
 		return await node
 			.aggregate([
+				{ $addFields: { _id: { $toString: `$_id` } } },
 				{
 					$lookup: {
 						from: `classes`,
-						localField: `username`,
+						localField: `_id`,
 						foreignField: `classTeacher`,
 						as: `classTeacherOf`,
 					},
@@ -57,22 +87,13 @@ module.exports = async (_, { tid }, { authorization }) => {
 				{
 					$lookup: {
 						from: `subjects`,
-						localField: `username`,
+						localField: `_id`,
 						foreignField: `teacher`,
 						as: `teaches`,
 					},
 				},
-				{
-					$unwind: `$classTeacherOf`,
-				},
 			])
 			.toArray();
-		// return singleTeacher.map((teacher) => {
-		// 	return {
-		// 		...teacher,
-		// 		classTeacherOf: teacher.classTeacherOf.length > 0 ? teacher.classTeacherOf[0] : null,
-		// 	};
-		// });
 	} catch (error) {
 		return error;
 	} finally {

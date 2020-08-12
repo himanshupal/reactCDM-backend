@@ -98,9 +98,9 @@ module.exports = gql`
 		totalStudents: Int
 		students: [String]
 		createdAt: Float
-		createdBy: String
+		createdBy: ID
 		updatedAt: Float
-		updatedBy: Float
+		updatedBy: ID
 	}
 
 	input TeacherInput {
@@ -138,7 +138,7 @@ module.exports = gql`
 		aadharNumber: String
 		photo: String
 		email: String
-		teaches: [Subject]!
+		teaches: [Subject]
 		department: String
 		contactNumber: String
 		dateOfJoining: String
@@ -146,54 +146,51 @@ module.exports = gql`
 		classTeacherOf: Class
 		alternativeContact: String
 		createdAt: Float
-		createdBy: String
+		createdBy: ID
 		updatedAt: Float
-		updatedBy: String
+		updatedBy: ID
 	}
 
-	input GistInput {
+	input NoteInput {
 		subject: String
 		description: String
 		scope: String
+		scopeId: String
 	}
-	type Gist {
+	type Note {
 		_id: ID
 		subject: String
 		description: String
 		scope: String
+		scopeId: String
 		createdAt: Float
-		createdBy: String
+		createdBy: ID
 	}
 
 	input SubjectInput {
 		name: String
 		subjectCode: String
 		uniSubjectCode: String
-		teacher: String
-		class: String
-		from: String
-		to: String
+		teacher: ID
 	}
 	type Subject {
 		_id: ID
 		name: String
 		subjectCode: String
 		uniSubjectCode: String
-		teacher: String
+		teacher: ID
 		class: String
-		from: String
-		to: String
 		createdAt: Float
-		createdBy: String
+		createdBy: ID
 		updatedAt: Float
-		updatedBy: String
+		updatedBy: ID
 	}
 	input SessionInput {
 		name: String
 		newName: String
 		sessionEnd: String
 		sessionStart: String
-		classTeacher: String
+		classTeacher: ID
 	}
 	type Class {
 		_id: ID
@@ -204,11 +201,11 @@ module.exports = gql`
 		totalStudents: Int
 		students: [Student]
 		timeTable: [Subject]
-		classTeacher: String
+		classTeacher: ID
 		createdAt: Float
-		createdBy: String
+		createdBy: ID
 		updatedAt: Float
-		updatedBy: String
+		updatedBy: ID
 	}
 	input CourseInput {
 		name: String
@@ -228,10 +225,10 @@ module.exports = gql`
 		department: String
 		director: String
 		headOfDepartment: String
-		createdBy: String
+		createdBy: ID
 		createdAt: Float
 		updatedAt: Float
-		updatedBy: String
+		updatedBy: ID
 	}
 	input DptInput {
 		name: String
@@ -246,9 +243,9 @@ module.exports = gql`
 		teachers: [Teacher]!
 		headOfDepartment: String
 		createdAt: Float
-		createdBy: String
+		createdBy: ID
 		updatedAt: Float
-		updatedBy: String
+		updatedBy: ID
 	}
 	type RootDpt {
 		departments: [Department]!
@@ -258,8 +255,8 @@ module.exports = gql`
 	type Query {
 		departments: RootDpt!
 		class(cid: ID): Class!
-		gists(gid: ID): [Gist]!
-		teachers(tid: ID): [Teacher]!
+		notes(nid: ID): [Note]!
+		teachers(department: ID, teacher: ID): [Teacher]!
 		classes(course: ID!): [Class]
 		students(sid: ID, cid: ID): [Student]!
 		attendence(cid: ID, of: String!): [Attendence]!
@@ -268,6 +265,7 @@ module.exports = gql`
 	type Mutation {
 		addAttendenceMany(cid: ID!, data: [AttendenceInput]!): String!
 		updateAttendence(aid: ID!, data: [AttendenceInput]!): String!
+		addSubject(class_id: ID!, subjects: [SubjectInput]!): String!
 		newSession(course: ID!, data: [SessionInput]!): String!
 		updateSubject(sid: ID!, data: SubjectInput!): String!
 		updateTeacher(tid: ID!, data: TeacherInput!): String!
@@ -276,12 +274,12 @@ module.exports = gql`
 		updateDepartment(did: ID!, data: DptInput!): String!
 		updateClass(cid: ID!, data: SessionInput!): String!
 		updateCourse(cid: ID!, data: CourseInput!): String!
-		updateGist(gid: ID!, data: GistInput!): String!
+		updateNote(gid: ID!, data: NoteInput!): String!
 		addAttendence(data: AttendenceInput!): String!
-		addSubject(data: SubjectInput!): String!
 		addStudent(data: StudentInput!): String!
 		addTeacher(data: TeacherInput!): String!
 		addCourse(data: CourseInput!): String!
-		createGist(data: GistInput!): String!
+		createNotice(data: NoteInput!): String!
+		createNote(data: NoteInput!): String!
 	}
 `;

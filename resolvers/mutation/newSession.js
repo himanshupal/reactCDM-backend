@@ -21,8 +21,8 @@ module.exports = async (_, { course, data }, { authorization }) => {
 		if (!courseCheck) throw new UserInputError(`Course not found ⚠`, { error: `Couldn't find any course with given details.` });
 		const res = await Promise.all(
 			data.map(async (session) => {
-				try {
-					if (session.newName !== undefined) {
+				if (session.newName !== undefined)
+					try {
 						const node = client.db(`RBMI`).collection(`classes`);
 						const classTeacherCheck = await node.findOne({
 							classTeacher: session.classTeacher,
@@ -66,10 +66,9 @@ module.exports = async (_, { course, data }, { authorization }) => {
 								upsert: true,
 							}
 						);
+					} catch (error) {
+						throw error;
 					}
-				} catch (error) {
-					throw error;
-				}
 			})
 		);
 		return res.length > 0 ? `Classes saved successfully ✔` : `Error creating session. Please try again or contact admin if issue persists`;

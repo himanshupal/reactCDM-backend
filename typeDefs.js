@@ -1,4 +1,4 @@
-const { gql } = require(`apollo-server`);
+const { gql } = require(`apollo-server`)
 
 module.exports = gql`
 	input NameInputObject {
@@ -178,7 +178,7 @@ module.exports = gql`
 		name: String
 		subjectCode: String
 		uniSubjectCode: String
-		teacher: ID
+		teacher: Teacher
 		class: String
 		createdAt: Float
 		createdBy: ID
@@ -200,7 +200,6 @@ module.exports = gql`
 		sessionEnd: String
 		totalStudents: Int
 		students: [Student]
-		timeTable: [Subject]
 		classTeacher: ID
 		createdAt: Float
 		createdBy: ID
@@ -252,10 +251,36 @@ module.exports = gql`
 		teachers: [Teacher]!
 	}
 
+	input DayTimeMapInput {
+		subjectId: ID
+		teacherId: ID
+	}
+	input TimeTableInput {
+		from: String
+		to: String
+		detail: [DayTimeMapInput]!
+	}
+
+	type DayTimeMap {
+		subjectId: ID
+		teacherID: ID
+	}
+	type SubjectDayTimeMap {
+		from: String
+		to: String
+		detail: [DayTimeMap]!
+	}
+	type TimeTable {
+		_id: ID
+		time: [SubjectDayTimeMap]!
+	}
+
 	type Query {
 		departments: RootDpt!
 		class(cid: ID): Class!
 		notes(nid: ID): [Note]!
+		subjects(className: String): [Subject]!
+		timeTable(className: String!): TimeTable!
 		teachers(department: ID, teacher: ID): [Teacher]!
 		classes(course: ID!): [Class]
 		students(sid: ID, cid: ID): [Student]!
@@ -263,23 +288,34 @@ module.exports = gql`
 		attendenceMonth(cid: ID, month: Int, year: Int): [Attendence]!
 	}
 	type Mutation {
+		addAttendence(data: AttendenceInput!): String!
 		addAttendenceMany(cid: ID!, data: [AttendenceInput]!): String!
 		updateAttendence(aid: ID!, data: [AttendenceInput]!): String!
+
+		createTimeTable(className: String!, data: [TimeTableInput]!): String!
+		updateTimeTable(_id: ID!, data: [TimeTableInput]!): String!
+
 		addSubject(class_id: ID!, subjects: [SubjectInput]!): String!
-		newSession(course: ID!, data: [SessionInput]!): String!
 		updateSubject(sid: ID!, data: SubjectInput!): String!
-		updateTeacher(tid: ID!, data: TeacherInput!): String!
-		updateStudent(sid: ID!, data: StudentInput!): String!
-		login(username: String!, password: String!): String!
+
+		newSession(course: ID!, data: [SessionInput]!): String!
 		updateDepartment(did: ID!, data: DptInput!): String!
-		updateClass(cid: ID!, data: SessionInput!): String!
-		updateCourse(cid: ID!, data: CourseInput!): String!
-		updateNote(gid: ID!, data: NoteInput!): String!
-		addAttendence(data: AttendenceInput!): String!
-		addStudent(data: StudentInput!): String!
+
 		addTeacher(data: TeacherInput!): String!
+		updateTeacher(tid: ID!, data: TeacherInput!): String!
+
+		addStudent(data: StudentInput!): String!
+		updateStudent(sid: ID!, data: StudentInput!): String!
+
 		addCourse(data: CourseInput!): String!
+		updateCourse(cid: ID!, data: CourseInput!): String!
+
 		createNotice(data: NoteInput!): String!
+		updateClass(cid: ID!, data: SessionInput!): String!
+
 		createNote(data: NoteInput!): String!
+		updateNote(gid: ID!, data: NoteInput!): String!
+
+		login(username: String!, password: String!): String!
 	}
-`;
+`

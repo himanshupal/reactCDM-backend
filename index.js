@@ -3,8 +3,8 @@ const { ApolloServer } = require(`apollo-server`);
 (async () => {
 	try {
 		const { url } = await new ApolloServer({
-			playground: true,
-			introspection: true,
+			playground: true, // To be removed later
+			introspection: true, // To be removed later
 			resolvers: require(`./resolvers`),
 			typeDefs: require(`./typeDefs`),
 			context: ({ req }) => req.headers,
@@ -13,6 +13,6 @@ const { ApolloServer } = require(`apollo-server`);
 		}).listen(process.env.PORT || 80);
 		console.log(`Server ready at ${url}`);
 	} catch (error) {
-		console.error(error);
+		throw new Error(error);
 	}
 })();

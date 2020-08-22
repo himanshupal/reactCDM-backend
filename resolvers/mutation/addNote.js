@@ -1,10 +1,10 @@
-const { UserInputError } = require(`apollo-server`),
+const { UserInputError, ForbiddenError } = require(`apollo-server`),
 	{ MongoClient } = require(`mongodb`);
 
 const authenticate = require(`../../checkAuth`),
 	accessAllowed = [`Director`, `Head of Department`, `Associate Professor`, `Assistant Professor`, `Student`];
 
-module.exports = async (_, { data }, { headers }) => {
+module.exports = async (_, { data: { subject, description, scope, scopeId } }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -12,15 +12,17 @@ module.exports = async (_, { data }, { headers }) => {
 	});
 	try {
 		await client.connect();
-		const user = await authenticate(headers.authorization);
+		const user = await authenticate(authorization);
 		if (!accessAllowed.includes(user.access)) throw new ForbiddenError(`Access Denied ⚠`);
-		if (user.access === `Student` && data.scope === `Public`)
-			throw new UserInputError(`Access Denied ⚠`, { error: `Students are not allowed to create public gists.` });
+		if (![`Class`, `Private`, `Friends`].includes(scope || `Private`))
+			throw new UserInputError(`Access Denied ⚠`, { error: `Notes can only be private or between friends or for a class.` });
+		if (scope === `Class` && !scopeId)
+			throw new UserInputError(`Argument Missing ⚠`, { error: `You must provide a class as scopeId to add a class wide note.` });
 		const res = await client
 			.db(`RBMI`)
-			.collection(`gists`)
-			.insertOne({ ...data, createdAt: Date.now(), createdBy: user.username });
-		return res.insertedCount > 0 ? `Gist created successfully ✔` : `There was some error saving data. Please try again or contact admin.`;
+			.collection(`notes`)
+			.insertOne({ subject, description, [scope || `Private`]: scopeId ? scopeId : true, createdAt: Date.now(), createdBy: user.username });
+		return res.insertedCount > 0 ? `Added successfully ✔` : `There was some error saving  Please try again or contact admin.`;
 	} catch (error) {
 		return error;
 	} finally {

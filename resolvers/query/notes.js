@@ -1,7 +1,9 @@
-const { MongoClient, ObjectId } = require(`mongodb`),
+const { MongoClient } = require(`mongodb`),
 	authenticate = require(`../../checkAuth`);
 
-module.exports = async (_, { gid }, { authorization }) => {
+const accessAllowed = [`Director`, `Head of Department`, `Associate Professor`, `Assistant Professor`, `Student`];
+
+module.exports = async (_, __, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -10,18 +12,18 @@ module.exports = async (_, { gid }, { authorization }) => {
 	try {
 		await client.connect();
 		const user = await authenticate(authorization);
-		const node = client.db(`RBMI`).collection(`gists`);
-		if (gid) return await node.find({ _id: ObjectId(gid) }).toArray();
-		if (!authorization) return await node.find({ scope: `Public` }).toArray();
-		return await node
+		if (!accessAllowed.includes(user.access)) throw new ForbiddenError(`Access Denied ⚠`);
+		return await client
+			.db(`RBMI`)
+			.collection(`notes`)
 			.find({
 				$or: [
 					{
 						createdBy: user.username,
-						scope: `Private`,
+						Private: true,
 					},
 					{
-						scope: `Public`,
+						[scope]: scopeId,
 					},
 				],
 			})

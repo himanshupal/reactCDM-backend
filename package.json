@@ -7,19 +7,21 @@
 		"dev": "dotenv nodemon index.js",
 		"start": "node index.js"
 	},
-	"keywords": [
-		"graphql",
-		"college"
-	],
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:himanshupal/reactCDM-backend.git"
+	},
 	"author": "Himanshu Pal et. al.",
 	"license": "GPL-3.0-or-later",
 	"dependencies": {
-		"apollo-server": "^2.12.0",
-		"graphql": "^15.0.0",
+		"apollo-server": "^2.16.1",
+		"argon2": "^0.27.0",
+		"blakejs": "^1.1.0",
+		"graphql": "^15.3.0",
 		"jsonwebtoken": "^8.5.1",
-		"mongodb": "^3.5.6"
+		"mongodb": "^3.6.0"
 	},
 	"devDependencies": {
-		"nodemon": "^2.0.3"
+		"nodemon": "^2.0.4"
 	}
 }

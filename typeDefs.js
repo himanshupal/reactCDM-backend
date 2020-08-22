@@ -1,4 +1,4 @@
-const { gql } = require(`apollo-server`)
+const { gql } = require(`apollo-server`);
 
 module.exports = gql`
 	input NameInputObject {
@@ -317,5 +317,7 @@ module.exports = gql`
 		updateNote(gid: ID!, data: NoteInput!): String!
 
 		login(username: String!, password: String!): String!
+
+		changePassword(oldPassword: String!, newPassword: String!): String!
 	}
-`
+`;

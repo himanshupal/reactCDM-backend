@@ -13,6 +13,6 @@ const { ApolloServer } = require(`apollo-server`);
 		}).listen(process.env.PORT || 80);
 		console.log(`Server ready at ${url}`);
 	} catch (error) {
-		throw new Error(error);
+		console.error(error);
 	}
 })();

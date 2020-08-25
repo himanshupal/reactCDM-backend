@@ -1,3 +1,4 @@
+const { ForbiddenError } = require(`apollo-server`);
 const { MongoClient } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
@@ -13,6 +14,7 @@ module.exports = async (_, { department: queryDpt }, { authorization }) => {
 		await client.connect();
 
 		const { access, department } = await authenticate(authorization);
+		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
 		const node = client.db(`RBMI`).collection(`courses`);
 

@@ -196,7 +196,7 @@ module.exports = gql`
 		updatedAt: Float
 		updatedBy: ID
 	}
-	input SessionInput {
+	input ClassInput {
 		name: String
 		newName: String
 		sessionEnd: String
@@ -206,16 +206,17 @@ module.exports = gql`
 	type Class {
 		_id: ID
 		name: String
-		course: String
+		course: Course
 		sessionStart: String
 		sessionEnd: String
 		totalStudents: Int
 		students: [Student]
-		classTeacher: ID
+		classTeacher: Teacher
+
 		createdAt: Float
-		createdBy: ID
+		createdBy: Teacher
 		updatedAt: Float
-		updatedBy: ID
+		updatedBy: Teacher
 	}
 
 	input CourseInput {
@@ -255,41 +256,49 @@ module.exports = gql`
 		updatedBy: Teacher
 	}
 
-	input DayTimeMapInput {
+	input TimeMapInput {
 		subjectId: ID
 		teacherId: ID
 	}
 	input TimeTableInput {
 		from: String
 		to: String
-		detail: [DayTimeMapInput]!
+		days: [TimeMapInput]!
 	}
 
-	type DayTimeMap {
-		subjectId: ID
-		teacherID: ID
-	}
-	type SubjectDayTimeMap {
-		from: String
-		to: String
-		detail: [DayTimeMap]!
+	type TimeMap {
+		subjectId: Subject
+		teacherID: Teacher
 	}
 	type TimeTable {
 		_id: ID
-		time: [SubjectDayTimeMap]!
+		from: String
+		to: String
+		days: [TimeMap]!
+
+		createdAt: String
+		createdBy: Teacher
+		updatedAt: String
+		updatedBy: Teacher
 	}
 
 	type Query {
 		departments: [Department]!
+
 		courses(department: ID): [Course]!
+
+		teachers(department: ID): [Teacher]!
+		teacher(username: String): Teacher!
+
+		students(class: ID): [Student]!
+		student(username: String): Student!
+
+		timeTable(class: ID!): TimeTable!
 
 		class(cid: ID): Class!
 		notes(nid: ID): [Note]!
 		subjects(className: String): [Subject]!
-		timeTable(className: String!): TimeTable!
-		teachers(department: ID, teacher: ID): [Teacher]!
 		classes(course: ID!): [Class]
-		students(sid: ID, cid: ID): [Student]!
 		attendence(cid: ID, of: String!): [Attendence]!
 		attendenceMonth(cid: ID, month: Int, year: Int): [Attendence]!
 	}
@@ -298,13 +307,14 @@ module.exports = gql`
 		addAttendenceMany(cid: ID!, data: [AttendenceInput]!): String!
 		updateAttendence(aid: ID!, data: [AttendenceInput]!): String!
 
-		createTimeTable(className: String!, data: [TimeTableInput]!): String!
-		updateTimeTable(_id: ID!, data: [TimeTableInput]!): String!
+		addTimeTable(class: ID!, data: [TimeTableInput]!): TimeTable!
+		updateTimeTable(_id: ID!, data: [TimeTableInput]!): TimeTable!
 
 		addSubject(class_id: ID!, subjects: [SubjectInput]!): String!
 		updateSubject(sid: ID!, data: SubjectInput!): String!
 
-		newSession(course: ID!, data: [SessionInput]!): String!
+		newSession(course: ID!, data: [ClassInput]!): [Class]!
+		updateClass(_id: ID!, data: ClassInput!): Class!
 
 		addDepartment(data: DepartmentInput!): Department!
 		updateDepartment(_id: ID!, data: DepartmentInput!): Department!
@@ -319,7 +329,6 @@ module.exports = gql`
 		updateStudent(_id: ID!, data: StudentInput!): Student!
 
 		createNotice(data: NoteInput!): String!
-		updateClass(cid: ID!, data: SessionInput!): String!
 
 		createNote(data: NoteInput!): String!
 		updateNote(gid: ID!, data: NoteInput!): String!

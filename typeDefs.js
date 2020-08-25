@@ -190,12 +190,13 @@ module.exports = gql`
 		subjectCode: String
 		uniSubjectCode: String
 		teacher: Teacher
-		class: String
+
 		createdAt: Float
-		createdBy: ID
+		createdBy: Teacher
 		updatedAt: Float
-		updatedBy: ID
+		updatedBy: Teacher
 	}
+
 	input ClassInput {
 		name: String
 		newName: String
@@ -206,11 +207,10 @@ module.exports = gql`
 	type Class {
 		_id: ID
 		name: String
-		course: Course
 		sessionStart: String
 		sessionEnd: String
 		totalStudents: Int
-		students: [Student]
+		subjects: [Subject]!
 		classTeacher: Teacher
 
 		createdAt: Float
@@ -293,12 +293,11 @@ module.exports = gql`
 		students(class: ID): [Student]!
 		student(username: String): Student!
 
+		classes(course: ID!): [Class]!
 		timeTable(class: ID!): TimeTable!
 
-		class(cid: ID): Class!
 		notes(nid: ID): [Note]!
 		subjects(className: String): [Subject]!
-		classes(course: ID!): [Class]
 		attendence(cid: ID, of: String!): [Attendence]!
 		attendenceMonth(cid: ID, month: Int, year: Int): [Attendence]!
 	}

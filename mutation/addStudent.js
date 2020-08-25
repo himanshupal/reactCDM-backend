@@ -24,6 +24,15 @@ module.exports = async (_, { data }, { authorization }) => {
 
 		const node = client.db(`RBMI`).collection(`students`);
 
+		const classExist = await client
+			.db(`RBMI`)
+			.collection(`classes`)
+			.findOne({ _id: ObjectId(data.class) });
+		if (!classExist)
+			throw new UserInputError(`Class not found ⚠`, {
+				error: `Couldn't find any class with provided details.`,
+			});
+
 		const teacher = await client
 			.db(`RBMI`)
 			.collection(`teachers`)

@@ -6,13 +6,13 @@ module.exports = {
 		students: require(`./query/students`),
 		teacher: require(`./query/teacher`),
 		student: require(`./query/student`),
+		classes: require(`./query/classes`),
 
 		attendenceMonth: require(`./query/getFullMonthAttendence`),
 		attendence: require(`./query/getAttendence`),
 		timeTable: require(`./query/timeTable`),
 		subjects: require(`./query/subjects`),
 		classes: require(`./query/classes`),
-		class: require(`./query/getClass`),
 		notes: require(`./query/notes`),
 	},
 	Mutation: {

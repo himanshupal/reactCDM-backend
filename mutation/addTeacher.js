@@ -24,6 +24,15 @@ module.exports = async (_, { data }, { authorization }) => {
 
 		const node = client.db(`RBMI`).collection(`teachers`);
 
+		const department = await client
+			.db(`RBMI`)
+			.collection(`departments`)
+			.findOne({ _id: ObjectId(data.department) });
+		if (!department)
+			throw new UserInputError(`Department not found ⚠`, {
+				error: `Couldn't find any department with provided details.`,
+			});
+
 		const student = await client
 			.db(`RBMI`)
 			.collection(`students`)

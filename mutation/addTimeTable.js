@@ -21,7 +21,7 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 
 		const node = client.db(`RBMI`).collection(`timetable`);
 
-		const checkClass = await node.findOne({ className });
+		const checkClass = await node.findOne({ class: className });
 		if (checkClass)
 			throw new UserInputError(`Already saved ⚠`, {
 				error: `Time Table already exists for selected class. Consider updating it.`,
@@ -33,7 +33,7 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 			.db(`RBMI`)
 			.collection(`timetable`)
 			.insertOne({
-				className,
+				class: className,
 				subjects: data,
 				createdAt: Timestamp.fromNumber(Date.now()),
 				createdBy: loggedInUser,

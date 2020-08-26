@@ -16,8 +16,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 		await client.connect();
 
 		const { _id: loggedInUser, access } = await authenticate(authorization);
-		if (!permitted.includes(access))
-			throw new ForbiddenError(`Access Denied ⚠`);
+		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
 		const node = client.db(`RBMI`).collection(`courses`);
 
@@ -44,6 +43,22 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 			if (check)
 				throw new UserInputError(`Teacher reallocation ⚠`, {
 					error: `The teacher is already assigned as Head of another Department.`,
+				});
+
+			const previous = await node.findOne({ _id: ObjectId(_id) });
+			if (!previous)
+				throw new UserInputError(`Not Found ⚠`, {
+					error: `Couldn't find the course you are trying to update. Please try again or contact admin if issue persists.`,
+				});
+
+			const { modifiedCount } = await client
+				.db(`RBMI`)
+				.collection(`teachers`)
+				.updateOne({ _id: ObjectId(previous.headOfDepartment) }, { $set: { designation: `Associate Professor` } });
+
+			if (!modifiedCount)
+				throw new UserInputError(`Unknown Error ⚠`, {
+					error: `Error updating department. Please try again or contact admin if issue persists.`,
 				});
 		}
 

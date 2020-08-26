@@ -1,49 +1,102 @@
-const { UserInputError, ForbiddenError } = require(`apollo-server`),
-	{ MongoClient, ObjectId } = require(`mongodb`);
+const { UserInputError, ForbiddenError } = require(`apollo-server`);
+const { MongoClient, ObjectId, Timestamp } = require(`mongodb`);
 
-const authenticate = require(`../checkAuth`),
-	accessAllowed = [`Director`, `Head of Department`];
+const authenticate = require(`../checkAuth`);
 
-module.exports = async (_, { sid, data }, { authorization }) => {
+const permitted = [`Director`, `Head of Department`, `Associate Professor`];
+
+module.exports = async (_, { _id, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
 		useUnifiedTopology: true,
 	});
+
 	try {
 		await client.connect();
-		const user = await authenticate(authorization);
-		if (!accessAllowed.includes(user.access)) throw new ForbiddenError(`Access Denied ⚠`);
+
+		const { _id: loggedInUser, access } = await authenticate(authorization);
+		if (!permitted.includes(access))
+			throw new ForbiddenError(`Access Denied ⚠`);
+
 		const node = client.db(`RBMI`).collection(`subjects`);
-		const check = await node.findOne({ _id: ObjectId(sid) });
-		if (!check) throw new UserInputError(`Not found ⚠`, { error: `Couldn't find any subject with given details.` });
+
 		if (data.subjectCode || data.uniSubjectCode) {
-			const codeCheck = await node.findOne({ $or: [{ subjectCode: data.subjectCode }, { uniSubjectCode: data.uniSubjectCode }] });
-			if (codeCheck)
+			const check = await node.findOne({
+				$or: [
+					{ subjectCode: data.subjectCode },
+					{ uniSubjectCode: data.uniSubjectCode },
+				],
+			});
+			if (check)
 				throw new UserInputError(`Already exists ⚠`, {
-					error: `Subject ${codeCheck.name} already exists for provided subject codes.`,
+					error: `Subject ${check.name} already exists for provided subject codes.`,
 				});
 		}
-		if (data.class) {
-			const classCheck = await client.db(`RBMI`).collection(`classes`).findOne({ name: data.class });
-			if (!classCheck)
-				throw new UserInputError(`Class not found ⚠`, {
-					error: `Couldn't find ${data.class} class with given details.`,
-				});
-		}
-		const res = await node.updateOne(
-			{ _id: ObjectId(sid) },
+
+		const { lastErrorObject, value } = await node.findOneAndUpdate(
+			{ _id: ObjectId(_id) },
 			{
 				$set: {
 					...data,
-					updatedAt: Date.now(),
-					updatedBy: user.username,
+					updatedAt: Timestamp.fromNumber(Date.now()),
+					updatedBy: loggedInUser,
 				},
-			}
+			},
+			{ returnOriginal: false }
 		);
-		return res.modifiedCount > 0
-			? `Subject updated successfully ✔`
-			: `There was some error saving subject. Please try again or contact admin if issue persists.`;
+
+		if (!lastErrorObject.n)
+			throw new UserInputError(`Unknown Error ⚠`, {
+				error: `Error updating course. Please try again or contact admin if issue persists.`,
+			});
+
+		const [subject] = await node
+			.aggregate([
+				{ $match: { _id: value._id } },
+				{
+					$addFields: {
+						teacher: { $toObjectId: `$teacher` },
+						createdBy: { $toObjectId: `$createdBy` },
+						updatedBy: { $toObjectId: `$updatedBy` },
+					},
+				},
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `teacher`,
+						foreignField: `_id`,
+						as: `teacher`,
+					},
+				},
+				{
+					$unwind: {
+						path: `$teacher`,
+						preserveNullAndEmptyArrays: true,
+					},
+				},
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `createdBy`,
+						foreignField: `_id`,
+						as: `createdBy`,
+					},
+				},
+				{ $unwind: `$createdBy` },
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `updatedBy`,
+						foreignField: `_id`,
+						as: `updatedBy`,
+					},
+				},
+				{ $unwind: `$updatedBy` },
+			])
+			.toArray();
+
+		return subject;
 	} catch (error) {
 		return error;
 	} finally {

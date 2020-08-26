@@ -62,9 +62,20 @@ module.exports = async (_, { data }, { authorization }) => {
 				});
 		}
 
-		const {
-			ops: [{ _id }],
-		} = await node.insertOne({
+		const { modifiedCount } = await client
+			.db(`RBMI`)
+			.collection(`teachers`)
+			.updateOne(
+				{ _id: ObjectId(data.headOfDepartment) },
+				{ $set: { designation: `Head of Department` } }
+			);
+
+		if (!modifiedCount)
+			throw new UserInputError(`Unknown Error ⚠`, {
+				error: `Error updating course. Please try again or contact admin if issue persists.`,
+			});
+
+		const { insertedId } = await node.insertOne({
 			...data,
 			createdAt: Timestamp.fromNumber(Date.now()),
 			createdBy: loggedInUser,
@@ -72,7 +83,7 @@ module.exports = async (_, { data }, { authorization }) => {
 
 		const [course] = await node
 			.aggregate([
-				{ $match: { _id } },
+				{ $match: { _id: insertedId } },
 				{
 					$addFields: {
 						headOfDepartment: { $toObjectId: `$headOfDepartment` },

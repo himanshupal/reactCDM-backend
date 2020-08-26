@@ -12,11 +12,8 @@ module.exports = async (_, { username }, { authorization }) => {
 	try {
 		await client.connect();
 
-		const { username: loggedInUser, access } = await authenticate(
-			authorization
-		);
-		if (username && access === `Student` && username !== loggedInUser)
-			throw new ForbiddenError(`Access Denied ⚠`);
+		const { username: loggedInUser, access } = await authenticate(authorization);
+		if (username && access === `Student` && username !== loggedInUser) throw new ForbiddenError(`Access Denied ⚠`);
 
 		if (access !== `Student` && !username)
 			throw new UserInputError(`Insufficient data ⚠`, {
@@ -77,6 +74,8 @@ module.exports = async (_, { username }, { authorization }) => {
 				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
+
+		// LookUp Teacher
 
 		return student;
 	} catch (error) {

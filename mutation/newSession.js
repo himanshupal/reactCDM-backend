@@ -5,7 +5,7 @@ const authenticate = require(`../checkAuth`);
 
 const permitted = [`Director`, `Head of Department`, `Associate Professor`];
 
-module.exports = async (current, { course, data }, { authorization }) => {
+module.exports = async (_, { course, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -30,7 +30,7 @@ module.exports = async (current, { course, data }, { authorization }) => {
 				error: `Couldn't find any course with provided details.`,
 			});
 
-		const result = await Promise.all(
+		return await Promise.all(
 			data.map(async (current) => {
 				try {
 					if (current.newName === undefined)
@@ -160,8 +160,6 @@ module.exports = async (current, { course, data }, { authorization }) => {
 				}
 			})
 		);
-
-		return result;
 	} catch (error) {
 		return error;
 	} finally {

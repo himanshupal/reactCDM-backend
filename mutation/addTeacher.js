@@ -50,9 +50,7 @@ module.exports = async (_, { data }, { authorization }) => {
 
 		const password = await hash(blake2bHex(data.username), hashConfig);
 
-		const {
-			ops: [{ _id }],
-		} = await node.insertOne({
+		const { insertedId } = await node.insertOne({
 			...data,
 			password,
 			createdAt: Timestamp.fromNumber(Date.now()),
@@ -61,7 +59,7 @@ module.exports = async (_, { data }, { authorization }) => {
 
 		const [newTeacher] = await node
 			.aggregate([
-				{ $match: { _id } },
+				{ $match: { _id: insertedId } },
 				{
 					$addFields: {
 						department: { $toObjectId: `$department` },

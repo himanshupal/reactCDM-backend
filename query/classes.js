@@ -1,4 +1,4 @@
-const { MongoClient, ObjectId } = require(`mongodb`);
+const { MongoClient } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
 
@@ -12,18 +12,87 @@ module.exports = async (_, { course }, { authorization }) => {
 	try {
 		await client.connect();
 
-		await authenticate(authorization);
+		const { access } = await authenticate(authorization);
+		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const classes = await client
+		return await client
 			.db(`RBMI`)
 			.collection(`classes`)
 			.aggregate([
-				{ $match: { course: ObjectId(course) } },
+				{ $match: { course } },
+				{
+					$lookup: {
+						from: `subjects`,
+						localField: `name`,
+						foreignField: `class`,
+						as: `subjects`,
+					},
+				},
+				{ $unwind: { path: `$subjects`, preserveNullAndEmptyArrays: true } },
 				{
 					$addFields: {
-						classTeacher: { $toObjectId: `$classTeacher` },
+						"subjects.teacher": { $toObjectId: `$subjects.teacher` },
+						"subjects.createdBy": { $toObjectId: `$subjects.createdBy` },
+						"subjects.updatedBy": { $toObjectId: `$subjects.updatedBy` },
+					},
+				},
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `subjects.teacher`,
+						foreignField: `_id`,
+						as: `subjects.teacher`,
+					},
+				},
+				{
+					$unwind: {
+						path: `$subjects.teacher`,
+						preserveNullAndEmptyArrays: true,
+					},
+				},
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `subjects.createdBy`,
+						foreignField: `_id`,
+						as: `subjects.createdBy`,
+					},
+				},
+				{ $unwind: `$subjects.createdBy` },
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `subjects.updatedBy`,
+						foreignField: `_id`,
+						as: `subjects.updatedBy`,
+					},
+				},
+				{
+					$unwind: {
+						path: `$subjects.updatedBy`,
+						preserveNullAndEmptyArrays: true,
+					},
+				},
+				{
+					$group: {
+						_id: `$_id`,
+						name: { $first: `$name` },
+						subjects: { $push: `$subjects` },
+						sessionEnd: { $first: `$sessionEnd` },
+						classTeacher: { $first: `$classTeacher` },
+						sessionStart: { $first: `$sessionStart` },
+						createdAt: { $first: `$createdAt` },
+						updatedAt: { $first: `$updatedAt` },
+						createdBy: { $first: `$createdBy` },
+						updatedBy: { $first: `$updatedBy` },
+					},
+				},
+				{
+					$addFields: {
+						_id: { $toString: `$_id` },
 						createdBy: { $toObjectId: `$createdBy` },
 						updatedBy: { $toObjectId: `$updatedBy` },
+						classTeacher: { $toObjectId: `$classTeacher` },
 					},
 				},
 				{
@@ -68,23 +137,14 @@ module.exports = async (_, { course }, { authorization }) => {
 						from: `students`,
 						localField: `_id`,
 						foreignField: `class`,
-						as: `students`,
+						as: `totalStudents`,
 					},
 				},
 				{
-					$lookup: {
-						from: `subjects`,
-						localField: `name`,
-						foreignField: `class`,
-						as: `subjects`,
-					},
+					$addFields: { totalStudents: { $size: `$totalStudents` } },
 				},
 			])
 			.toArray();
-
-		return classes.map((data) => {
-			return { ...data, totalStudents: data.students.length };
-		});
 	} catch (error) {
 		return error;
 	} finally {

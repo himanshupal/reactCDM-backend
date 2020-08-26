@@ -1,5 +1,5 @@
 const { UserInputError, ForbiddenError } = require(`apollo-server`);
-const { MongoClient, Timestamp } = require(`mongodb`);
+const { MongoClient, Timestamp, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
 
@@ -38,9 +38,20 @@ module.exports = async (_, { data }, { authorization }) => {
 				});
 		}
 
-		const {
-			ops: [{ _id }],
-		} = await node.insertOne({
+		const { modifiedCount } = await client
+			.db(`RBMI`)
+			.collection(`teachers`)
+			.updateOne(
+				{ _id: ObjectId(data.director) },
+				{ $set: { designation: `Director` } }
+			);
+
+		if (!modifiedCount)
+			throw new UserInputError(`Unknown Error ⚠`, {
+				error: `Error updating course. Please try again or contact admin if issue persists.`,
+			});
+
+		const { insertedId } = await node.insertOne({
 			...data,
 			createdAt: Timestamp.fromNumber(Date.now()),
 			createdBy: loggedInUser,
@@ -48,7 +59,7 @@ module.exports = async (_, { data }, { authorization }) => {
 
 		const [department] = await node
 			.aggregate([
-				{ $match: { _id } },
+				{ $match: { _id: insertedId } },
 				{
 					$addFields: {
 						director: { $toObjectId: `$director` },

@@ -32,6 +32,22 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 				throw new UserInputError(`Teacher reallocation ⚠`, {
 					error: `The teacher is already assigned as Director to another department.`,
 				});
+
+			const previous = await node.findOne({ _id: ObjectId(_id) });
+			if (!previous)
+				throw new UserInputError(`Not Found ⚠`, {
+					error: `Couldn't find the department you are trying to update. Please try again or contact admin if issue persists.`,
+				});
+
+			const { modifiedCount } = await client
+				.db(`RBMI`)
+				.collection(`teachers`)
+				.updateOne({ _id: ObjectId(previous.director) }, { $set: { designation: `Head of Department` } });
+
+			if (!modifiedCount)
+				throw new UserInputError(`Unknown Error ⚠`, {
+					error: `Error updating department. Please try again or contact admin if issue persists.`,
+				});
 		}
 
 		const { lastErrorObject, value } = await node.findOneAndUpdate(

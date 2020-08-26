@@ -294,13 +294,14 @@ module.exports = gql`
 		student(username: String): Student!
 
 		classes(course: ID!): [Class]!
+
 		timeTable(class: ID!): TimeTable!
 
 		notes(nid: ID): [Note]!
-		subjects(className: String): [Subject]!
 		attendence(cid: ID, of: String!): [Attendence]!
 		attendenceMonth(cid: ID, month: Int, year: Int): [Attendence]!
 	}
+
 	type Mutation {
 		addAttendence(data: AttendenceInput!): String!
 		addAttendenceMany(cid: ID!, data: [AttendenceInput]!): String!
@@ -309,8 +310,8 @@ module.exports = gql`
 		addTimeTable(class: ID!, data: [TimeTableInput]!): TimeTable!
 		updateTimeTable(_id: ID!, data: [TimeTableInput]!): TimeTable!
 
-		addSubject(class_id: ID!, subjects: [SubjectInput]!): String!
-		updateSubject(sid: ID!, data: SubjectInput!): String!
+		addSubject(class: String!, data: [SubjectInput]!): [Subject]!
+		updateSubject(_id: ID!, data: SubjectInput!): Subject!
 
 		newSession(course: ID!, data: [ClassInput]!): [Class]!
 		updateClass(_id: ID!, data: ClassInput!): Class!
@@ -333,7 +334,6 @@ module.exports = gql`
 		updateNote(gid: ID!, data: NoteInput!): String!
 
 		login(username: String!, password: String!): String!
-
 		changePassword(oldPassword: String!, newPassword: String!): String!
 	}
 `;

@@ -84,7 +84,6 @@ module.exports = gql`
 		contactNumber: String
 		admissionDate: String
 		dateOfLeaving: String
-		attendence: [Attendence]
 
 		createdAt: Float
 		createdBy: Teacher
@@ -143,20 +142,18 @@ module.exports = gql`
 
 	input AttendenceInput {
 		day: String
-		class: String
 		holiday: String
-		students: [String]
+		students: [ID]
 	}
 	type Attendence {
 		_id: ID
 		day: String
 		holiday: String
 		totalStudents: Int
-		students: [String]
+		students: [Student]
+
 		createdAt: Float
-		createdBy: ID
-		updatedAt: Float
-		updatedBy: ID
+		createdBy: Teacher
 	}
 
 	input NoteInput {
@@ -257,8 +254,8 @@ module.exports = gql`
 	}
 
 	input TimeMapInput {
-		subjectId: ID
-		teacherId: ID
+		subject: ID
+		teacher: ID
 	}
 	input TimeTableInput {
 		from: String
@@ -267,8 +264,8 @@ module.exports = gql`
 	}
 
 	type TimeMap {
-		subjectId: Subject
-		teacherID: Teacher
+		subject: Subject
+		teacher: Teacher
 	}
 	type TimeTable {
 		_id: ID
@@ -276,9 +273,9 @@ module.exports = gql`
 		to: String
 		days: [TimeMap]!
 
-		createdAt: String
+		createdAt: Float
 		createdBy: Teacher
-		updatedAt: String
+		updatedAt: Float
 		updatedBy: Teacher
 	}
 
@@ -295,19 +292,18 @@ module.exports = gql`
 
 		classes(course: ID!): [Class]!
 
-		timeTable(class: ID!): TimeTable!
+		timeTable(class: String!): TimeTable!
+
+		attendence(class: ID, month: Int, year: Int): [Attendence]!
 
 		notes(nid: ID): [Note]!
-		attendence(cid: ID, of: String!): [Attendence]!
-		attendenceMonth(cid: ID, month: Int, year: Int): [Attendence]!
 	}
 
 	type Mutation {
-		addAttendence(data: AttendenceInput!): String!
-		addAttendenceMany(cid: ID!, data: [AttendenceInput]!): String!
-		updateAttendence(aid: ID!, data: [AttendenceInput]!): String!
+		addAttendence(class: ID, data: AttendenceInput!): Attendence!
+		attendenceMonth(class: ID!, data: [AttendenceInput]!): [Attendence]!
 
-		addTimeTable(class: ID!, data: [TimeTableInput]!): TimeTable!
+		addTimeTable(class: String!, data: [TimeTableInput]!): TimeTable!
 		updateTimeTable(_id: ID!, data: [TimeTableInput]!): TimeTable!
 
 		addSubject(class: String!, data: [SubjectInput]!): [Subject]!

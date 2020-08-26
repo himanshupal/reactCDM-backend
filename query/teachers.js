@@ -13,11 +13,19 @@ module.exports = async (_, { department }, { authorization }) => {
 	try {
 		await client.connect();
 
-		const { access, department: userDepartment } = await authenticate(
-			authorization
-		);
-		if (access === `Student` || (department && access !== `Director`))
-			throw new ForbiddenError(`Access Denied ⚠`);
+		const { access, department: userDepartment } = await authenticate(authorization);
+		if (access === `Student` || (department && access !== `Director`)) throw new ForbiddenError(`Access Denied ⚠`);
+
+		if (department) {
+			const check = await client
+				.db(`RBMI`)
+				.collection(`courses`)
+				.findOne({ _id: ObjectId(course) });
+			if (!check)
+				throw new UserInputError(`Not Found ⚠`, {
+					error: `Couldn't find the course you've provided.`,
+				});
+		}
 
 		return await client
 			.db(`RBMI`)

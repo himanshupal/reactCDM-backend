@@ -1,44 +1,82 @@
-const { UserInputError, ForbiddenError } = require(`apollo-server`),
-	{ MongoClient } = require(`mongodb`);
+const { UserInputError, ForbiddenError } = require(`apollo-server`);
+const { MongoClient, Timestamp } = require(`mongodb`);
 
-const authenticate = require(`../checkAuth`),
-	accessAllowed = [`Director`, `Head of Department`, `Assosiate Professor`, `Assistant Professor`];
+const authenticate = require(`../checkAuth`);
 
-module.exports = async (_, { data }, { authorization }) => {
+module.exports = async (_, { class: className, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
 		useUnifiedTopology: true,
 	});
+
 	try {
 		await client.connect();
-		const user = await authenticate(authorization);
+
+		const { _id: loggedInUser, access } = await authenticate(authorization);
+		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
+
 		const node = client.db(`RBMI`).collection(`attendence`);
-		if (!accessAllowed.includes(user.access)) throw new ForbiddenError(`Access Denied ⚠`);
+
 		if (data.holiday && data.students)
 			throw new UserInputError(`It's holiday ⚠`, {
 				error: `Cannot add students on holiday.`,
 			});
+
 		const check = await node.findOne({ day: data.day, class: data.class });
 		if (check)
 			throw new UserInputError(`Already saved ⚠`, {
-				error: `Attendence already taken by ${check.createdBy} at ${new Date(check.createdAt)
-					.toLocaleTimeString("en-in", {
-						weekday: "short",
-						year: "numeric",
-						month: "long",
-						day: "numeric",
+				error: `Attendence already taken at ${new Date(check.createdAt)
+					.toLocaleTimeString(`en-in`, {
+						weekday: `short`,
+						year: `numeric`,
+						month: `long`,
+						day: `numeric`,
 					})
 					.replace(/,/g, ``)}. You can edit it though.`,
 			});
-		const res = await node.insertOne({
+
+		const [year, month, date] = data.day.split(`-`);
+
+		const { insertedId } = await node.insertOne({
+			class: className,
 			...data,
-			idx: { date: Number(data.day.split(`-`)[2]), month: Number(data.day.split(`-`)[1]) - 1, year: Number(data.day.split(`-`)[0]) },
+			idx: { date: Number(date), month: Number(month) - 1, year: Number(year) },
 			totalStudents: data.students ? data.students.length : 0,
-			createdAt: Date.now(),
-			createdBy: user.username,
+			createdAt: Timestamp.fromNumber(Date.now()),
+			createdBy: loggedInUser,
 		});
-		return res.insertedCount > 0 ? `Attendence saved successfully ✔` : `There was some error saving data. Please try again or contact admin.`;
+
+		const [attendence] = await node
+			.aggregate([
+				{ $match: { _id: insertedId } },
+				{
+					$addFields: {
+						students: { $toObjectId: `$students` },
+						createdBy: { $toObjectId: `$createdBy` },
+					},
+				},
+				{
+					$lookup: {
+						from: `students`,
+						localField: `students`,
+						foreignField: `_id`,
+						as: `students`,
+					},
+				},
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `createdBy`,
+						foreignField: `_id`,
+						as: `createdBy`,
+					},
+				},
+				{ $unwind: `$createdBy` },
+			])
+			.toArray();
+
+		return attendence;
 	} catch (error) {
 		return error;
 	} finally {

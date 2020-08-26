@@ -1,11 +1,11 @@
 const { ForbiddenError, UserInputError } = require(`apollo-server`);
-const { MongoClient, Timestamp } = require(`mongodb`);
+const { MongoClient, Timestamp, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
 
 const permitted = [`Director`, `Head of Department`];
 
-module.exports = async (_, { class: className, data }, { authorization }) => {
+module.exports = async (_, { _id, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -20,22 +20,26 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 
 		const node = client.db(`RBMI`).collection(`timetable`);
 
-		const check = await node.findOne({ class: className });
-		if (check)
-			throw new UserInputError(`Already saved ⚠`, {
-				error: `Time Table already exists for provided class. Consider updating it.`,
-			});
+		const { lastErrorObject, value } = await node.findOneAndUpdate(
+			{ _id: ObjectId(_id) },
+			{
+				$set: {
+					range: data.filter((x) => x.from && x.to),
+					createdAt: Timestamp.fromNumber(Date.now()),
+					createdBy: loggedInUser,
+				},
+			},
+			{ returnOriginal: false }
+		);
 
-		const { insertedId } = await node.insertOne({
-			class: className,
-			range: data.filter((x) => x.from && x.to),
-			createdAt: Timestamp.fromNumber(Date.now()),
-			createdBy: loggedInUser,
-		});
+		if (!lastErrorObject.n)
+			throw new UserInputError(`Unknown Error ⚠`, {
+				error: `Error creating/updating class. Please try again or contact admin if issue persists.`,
+			});
 
 		const [timeTable] = await node
 			.aggregate([
-				{ $match: { _id: insertedId } },
+				{ $match: { _id: value._id } },
 				{
 					$lookup: {
 						from: `teachers`,

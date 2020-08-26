@@ -1,4 +1,4 @@
-const { MongoClient } = require(`mongodb`);
+const { MongoClient, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
 
@@ -15,7 +15,16 @@ module.exports = async (_, { course }, { authorization }) => {
 		const { access } = await authenticate(authorization);
 		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
-		return await client
+		const check = await client
+			.db(`RBMI`)
+			.collection(`courses`)
+			.findOne({ _id: ObjectId(course) });
+		if (!check)
+			throw new UserInputError(`Not Found ⚠`, {
+				error: `Couldn't find the course you've provided details for.`,
+			});
+
+		const res = await client
 			.db(`RBMI`)
 			.collection(`classes`)
 			.aggregate([
@@ -23,68 +32,38 @@ module.exports = async (_, { course }, { authorization }) => {
 				{
 					$lookup: {
 						from: `subjects`,
-						localField: `name`,
-						foreignField: `class`,
+						let: { name: `$name` },
+						pipeline: [
+							{ $match: { $expr: { $eq: [`$class`, `$$name`] } } },
+							{
+								$lookup: {
+									from: `teachers`,
+									let: { teacher: { $toObjectId: `$teacher` } },
+									pipeline: [{ $match: { $expr: { $eq: [`$_id`, `$$teacher`] } } }],
+									as: `teacher`,
+								},
+							},
+							{ $unwind: { path: `$teacher`, preserveNullAndEmptyArrays: true } },
+							{
+								$lookup: {
+									from: `teachers`,
+									let: { createdBy: { $toObjectId: `$createdBy` } },
+									pipeline: [{ $match: { $expr: { $eq: [`$_id`, `$$createdBy`] } } }],
+									as: `createdBy`,
+								},
+							},
+							{ $unwind: `$createdBy` },
+							{
+								$lookup: {
+									from: `teachers`,
+									let: { updatedBy: { $toObjectId: `$updatedBy` } },
+									pipeline: [{ $match: { $expr: { $eq: [`$_id`, `$$updatedBy`] } } }],
+									as: `updatedBy`,
+								},
+							},
+							{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
+						],
 						as: `subjects`,
-					},
-				},
-				{ $unwind: { path: `$subjects`, preserveNullAndEmptyArrays: true } },
-				{
-					$addFields: {
-						"subjects.teacher": { $toObjectId: `$subjects.teacher` },
-						"subjects.createdBy": { $toObjectId: `$subjects.createdBy` },
-						"subjects.updatedBy": { $toObjectId: `$subjects.updatedBy` },
-					},
-				},
-				{
-					$lookup: {
-						from: `teachers`,
-						localField: `subjects.teacher`,
-						foreignField: `_id`,
-						as: `subjects.teacher`,
-					},
-				},
-				{
-					$unwind: {
-						path: `$subjects.teacher`,
-						preserveNullAndEmptyArrays: true,
-					},
-				},
-				{
-					$lookup: {
-						from: `teachers`,
-						localField: `subjects.createdBy`,
-						foreignField: `_id`,
-						as: `subjects.createdBy`,
-					},
-				},
-				{ $unwind: `$subjects.createdBy` },
-				{
-					$lookup: {
-						from: `teachers`,
-						localField: `subjects.updatedBy`,
-						foreignField: `_id`,
-						as: `subjects.updatedBy`,
-					},
-				},
-				{
-					$unwind: {
-						path: `$subjects.updatedBy`,
-						preserveNullAndEmptyArrays: true,
-					},
-				},
-				{
-					$group: {
-						_id: `$_id`,
-						name: { $first: `$name` },
-						subjects: { $push: `$subjects` },
-						sessionEnd: { $first: `$sessionEnd` },
-						classTeacher: { $first: `$classTeacher` },
-						sessionStart: { $first: `$sessionStart` },
-						createdAt: { $first: `$createdAt` },
-						updatedAt: { $first: `$updatedAt` },
-						createdBy: { $first: `$createdBy` },
-						updatedBy: { $first: `$updatedBy` },
 					},
 				},
 				{
@@ -103,12 +82,7 @@ module.exports = async (_, { course }, { authorization }) => {
 						as: `classTeacher`,
 					},
 				},
-				{
-					$unwind: {
-						path: `$classTeacher`,
-						preserveNullAndEmptyArrays: true,
-					},
-				},
+				{ $unwind: { path: `$classTeacher`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -126,12 +100,7 @@ module.exports = async (_, { course }, { authorization }) => {
 						as: `updatedBy`,
 					},
 				},
-				{
-					$unwind: {
-						path: `$updatedBy`,
-						preserveNullAndEmptyArrays: true,
-					},
-				},
+				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `students`,
@@ -140,11 +109,13 @@ module.exports = async (_, { course }, { authorization }) => {
 						as: `totalStudents`,
 					},
 				},
-				{
-					$addFields: { totalStudents: { $size: `$totalStudents` } },
-				},
+				{ $addFields: { totalStudents: { $size: `$totalStudents` } } },
 			])
 			.toArray();
+
+		console.log(res);
+
+		return res;
 	} catch (error) {
 		return error;
 	} finally {

@@ -1,5 +1,5 @@
 const { ForbiddenError } = require(`apollo-server`);
-const { MongoClient } = require(`mongodb`);
+const { MongoClient, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
 
@@ -15,6 +15,15 @@ module.exports = async (_, { department: queryDpt }, { authorization }) => {
 
 		const { access, department } = await authenticate(authorization);
 		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
+
+		const check = await client
+			.db(`RBMI`)
+			.collection(`departments`)
+			.findOne({ _id: ObjectId(queryDpt) });
+		if (!check)
+			throw new UserInputError(`Not Found ⚠`, {
+				error: `Couldn't find the department you've provided details for.`,
+			});
 
 		const node = client.db(`RBMI`).collection(`courses`);
 

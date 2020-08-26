@@ -20,6 +20,17 @@ module.exports = async (_, { class: className }, { authorization }) => {
 				error: `You must provide a class info to get students details.`,
 			});
 
+		if (className) {
+			const check = await client
+				.db(`RBMI`)
+				.collection(`classes`)
+				.findOne({ _id: ObjectId(className) });
+			if (!check)
+				throw new UserInputError(`Not Found ⚠`, {
+					error: `Couldn't find the class you've provided details for.`,
+				});
+		}
+
 		return await client
 			.db(`RBMI`)
 			.collection(`students`)

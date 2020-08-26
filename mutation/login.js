@@ -43,7 +43,19 @@ module.exports = async (_, { username, password }) => {
 		const teacher = await client
 			.db(`RBMI`)
 			.collection(`teachers`)
-			.findOne({ $or: [{ username }, { email: username }] });
+			.aggregate([
+				{ $match: { $or: [{ username }, { email: username }] } },
+				{ $addFields: { _id: { $toString: `$_id` } } },
+				{
+					$lookup: {
+						from: `classes`,
+						localField: `_id`,
+						foreignField: `classTeacher`,
+						as: `classTeacherOf`,
+					},
+				},
+				{ $unwind: { path: `$classTeacherOf`, preserveNullAndEmptyArrays: true } },
+			]);
 
 		if (teacher) {
 			const verified = await verify(teacher.password, password);
@@ -55,6 +67,7 @@ module.exports = async (_, { username, password }) => {
 						username: teacher.username,
 						department: teacher.department,
 						access: teacher.designation,
+						classTeacherOf: teacher.classTeacherOf._id.toString(),
 					},
 					process.env.jwt_secret,
 					jwtConfig

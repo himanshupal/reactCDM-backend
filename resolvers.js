@@ -12,9 +12,10 @@ module.exports = {
 
 		classes: require(`./query/classes`),
 
-		attendenceMonth: require(`./query/getFullMonthAttendence`),
-		attendence: require(`./query/getAttendence`),
+		attendence: require(`./query/attendence`),
+
 		timeTable: require(`./query/timeTable`),
+
 		notes: require(`./query/notes`),
 	},
 	Mutation: {
@@ -38,9 +39,9 @@ module.exports = {
 
 		addTimeTable: require(`./mutation/addTimeTable`),
 
-		addAttendenceMany: require(`./mutation/addAttendenceMany`),
-		updateAttendence: require(`./mutation/updateAttendence`),
 		addAttendence: require(`./mutation/addAttendence`),
+		attendenceMonth: require(`./mutation/attendenceMonth`),
+
 		createNote: require(`./mutation/addNote`),
 
 		changePassword: require(`./mutation/changePassword`),

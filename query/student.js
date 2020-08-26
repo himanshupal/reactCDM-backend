@@ -20,6 +20,12 @@ module.exports = async (_, { username }, { authorization }) => {
 				error: `You must provide a username to get student's details.`,
 			});
 
+		const check = await client.db(`RBMI`).collection(`students`).findOne({ username });
+		if (!check)
+			throw new UserInputError(`Not Found ⚠`, {
+				error: `Couldn't find the student you've provided username for.`,
+			});
+
 		const [student] = await client
 			.db(`RBMI`)
 			.collection(`students`)
@@ -32,24 +38,26 @@ module.exports = async (_, { username }, { authorization }) => {
 				{
 					$addFields: {
 						_id: { $toString: `$_id` },
-						class: { $toObjectId: `$class` },
 						createdBy: { $toObjectId: `$createdBy` },
 						updatedBy: { $toObjectId: `$updatedBy` },
 					},
 				},
 				{
 					$lookup: {
-						from: `attendence`,
-						localField: `_id`,
-						foreignField: `students`,
-						as: `attendence`,
-					},
-				},
-				{
-					$lookup: {
 						from: `classes`,
-						localField: `class`,
-						foreignField: `_id`,
+						let: { class: { $toObjectId: `$class` } },
+						pipeline: [
+							{ $match: { $expr: { $eq: [`$_id`, `$$class`] } } },
+							{
+								$lookup: {
+									from: `teachers`,
+									let: { classTeacher: { $toObjectId: `$classTeacher` } },
+									pipeline: [{ $match: { $expr: { $eq: [`$_id`, `$classTeacher`] } } }],
+									as: `classTeacher`,
+								},
+							},
+							{ $unwind: { path: `$classTeacher`, preserveNullAndEmptyArrays: true } },
+						],
 						as: `class`,
 					},
 				},
@@ -74,8 +82,6 @@ module.exports = async (_, { username }, { authorization }) => {
 				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
-
-		// LookUp Teacher
 
 		return student;
 	} catch (error) {

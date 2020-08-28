@@ -16,7 +16,12 @@ module.exports = {
 
 		timeTable: require(`./query/timeTable`),
 
+		friends: require(`./query/friends`),
+
 		notes: require(`./query/notes`),
+
+		notices: require(`./query/notices`),
+		notice: require(`./query/notice`),
 	},
 	Mutation: {
 		addDepartment: require(`./mutation/addDepartment`),
@@ -38,11 +43,20 @@ module.exports = {
 		addSubject: require(`./mutation/addSubject`),
 
 		addTimeTable: require(`./mutation/addTimeTable`),
+		updateTimeTable: require(`./mutation/updateTimeTable`),
 
 		addAttendence: require(`./mutation/addAttendence`),
 		attendenceMonth: require(`./mutation/attendenceMonth`),
 
-		createNote: require(`./mutation/addNote`),
+		addFriends: require(`./mutation/addFriends`),
+
+		addNote: require(`./mutation/addNote`),
+		updateNote: require(`./mutation/updateNote`),
+		deleteNote: require(`./mutation/deleteNote`),
+
+		addNotice: require(`./mutation/addNotice`),
+		updateNotice: require(`./mutation/updateNotice`),
+		deleteNotice: require(`./mutation/deleteNotice`),
 
 		changePassword: require(`./mutation/changePassword`),
 		login: require(`./mutation/login`),

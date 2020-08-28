@@ -1,9 +1,11 @@
-const { ForbiddenError, UserInputError } = require(`apollo-server`);
-const { MongoClient } = require(`mongodb`);
+const { UserInputError, ForbiddenError } = require(`apollo-server`);
+const { MongoClient, Timestamp, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
 
-module.exports = async (_, { data }, { authorization }) => {
+const permitted = [`Director`, `Head of Department`, `Associate Professor`];
+
+module.exports = async (_, { data: { scope, subject, scopeId, description } }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -13,18 +15,65 @@ module.exports = async (_, { data }, { authorization }) => {
 	try {
 		await client.connect();
 
-		const { _id: loggedInUser } = await authenticate(authorization);
+		const { _id: loggedInUser, access, department } = await authenticate(authorization);
+		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
-		if (!scope) throw new UserInputError(`Argument Missing ⚠`, { error: `You must select a scope for notice.` });
-		if (data.scope === `Department` && (user.access === `Associate Professor` || user.access === `Assistant Professor`))
-			throw new UserInputError(`Not enough access ⚠`, { error: `Professor(s) can't create department wide notices.` });
-		else if (data.scope === `Course` && user.access === `Assistant Professor`)
-			throw new UserInputError(`Not enough access ⚠`, { error: `Assistant Professor(s) can't create course wide notices.` });
-		const res = await client
-			.db(`RBMI`)
-			.collection(`notices`)
-			.insertOne({ ...data, [data.scope]: data.scopeId, createdAt: Date.now(), createdBy: user.username });
-		return res.insertedCount > 0 ? `Added successfully ✔` : `There was some error saving data. Please try again or contact admin.`;
+		const node = client.db(`RBMI`).collection(`notices`);
+
+		if (!subject && !description)
+			throw new UserInputError(`Argument Missing ⚠`, {
+				error: `You must provide a subject with description to add notice.`,
+			});
+
+		if (![`Class`, `Course`, `Department`].includes(scope || `Department`))
+			throw new UserInputError(`Access Denied ⚠`, {
+				error: `Notices can be provided only for class, course or for a department.`,
+			});
+
+		if (scope && !scopeId)
+			throw new UserInputError(`Argument Missing ⚠`, {
+				error: `You must provide info of ${scope.toLowerCase()} to add notice for.`,
+			});
+
+		if (scope) {
+			const check = await client
+				.db(`RBMI`)
+				.collection(scope === `Class` ? `classes` : scope === `Course` ? `courses` : `departments`)
+				.findOne({ _id: ObjectId(scopeId) });
+			if (!check)
+				throw new UserInputError(`${scope} Not Found ⚠`, {
+					error: `Couldn't find any ${
+						scope === `Class` ? `class` : scope === `Course` ? `course` : `department`
+					} with provided details.`,
+				});
+		}
+
+		const { insertedId } = await node.insertOne({
+			subject,
+			description,
+			scopeId: scopeId || department,
+			scope: scope || `Department`,
+			createdAt: Timestamp.fromNumber(Date.now()),
+			createdBy: loggedInUser,
+		});
+
+		const [saved] = await node
+			.aggregate([
+				{ $match: { _id: insertedId } },
+				{ $addFields: { createdBy: { $toObjectId: `$createdBy` } } },
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `createdBy`,
+						foreignField: `_id`,
+						as: `createdBy`,
+					},
+				},
+				{ $unwind: `$createdBy` },
+			])
+			.toArray();
+
+		return saved;
 	} catch (error) {
 		return error;
 	} finally {

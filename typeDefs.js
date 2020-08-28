@@ -156,23 +156,23 @@ module.exports = gql`
 		createdBy: Teacher
 	}
 
-	input NoteInput {
+	input PageInput {
 		scope: String
 		subject: String
-		scopeId: String
+		scopeId: ID
 		description: String
 	}
-	type Note {
+	type Page {
 		_id: ID
-		subject: String
-		description: String
 		scope: String
-		scopeId: String
+		subject: String
+		scopeId: Department
+		description: String
 
 		createdAt: Float
-		createdBy: ID
+		createdBy: Teacher
 		updatedAt: Float
-		updatedBy: ID
+		updatedBy: Teacher
 	}
 
 	input SubjectInput {
@@ -296,7 +296,12 @@ module.exports = gql`
 
 		attendence(class: ID, month: Int, year: Int): [Attendence]!
 
-		notes(nid: ID): [Note]!
+		friends: [Student]!
+
+		notes(page: Int!): [Page]!
+
+		notices(page: Int!): [Page]!
+		notice(_id: ID!): Page!
 	}
 
 	type Mutation {
@@ -324,10 +329,16 @@ module.exports = gql`
 		addStudent(data: StudentInput!): Student!
 		updateStudent(_id: ID!, data: StudentInput!): Student!
 
-		createNotice(data: NoteInput!): String!
+		addFriends(friends: [ID]!): [Student]!
+		updateFriends(friends: [ID]!): [Student]!
 
-		createNote(data: NoteInput!): String!
-		updateNote(gid: ID!, data: NoteInput!): String!
+		addNote(data: PageInput!): Page!
+		updateNote(_id: ID!, data: PageInput!): Page!
+		deleteNote(_id: ID!): Boolean!
+
+		addNotice(data: PageInput!): Page!
+		updateNotice(_id: ID!, data: PageInput!): Page!
+		deleteNotice(_id: ID!): Boolean!
 
 		login(username: String!, password: String!): String!
 		changePassword(oldPassword: String!, newPassword: String!): String!

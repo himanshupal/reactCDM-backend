@@ -1,32 +1,47 @@
-const { MongoClient } = require(`mongodb`),
-	authenticate = require(`../checkAuth`);
+const { ForbiddenError } = require(`apollo-server`);
+const { MongoClient } = require(`mongodb`);
 
-const accessAllowed = [`Director`, `Head of Department`, `Associate Professor`, `Assistant Professor`, `Student`];
+const authenticate = require(`../checkAuth`);
 
-module.exports = async (_, __, { authorization }) => {
+module.exports = async (_, { page }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
 		useUnifiedTopology: true,
 	});
+
 	try {
 		await client.connect();
-		const user = await authenticate(authorization);
-		if (!accessAllowed.includes(user.access)) throw new ForbiddenError(`Access Denied ⚠`);
-		return await client
+
+		const { _id: loggedInUser, access, class: userClass } = await authenticate(authorization);
+		if (access !== `Student`) throw new ForbiddenError(`Access Denied ⚠`);
+
+		await client
 			.db(`RBMI`)
 			.collection(`notes`)
-			.find({
-				$or: [
-					{
-						createdBy: user.username,
-						Private: true,
+			.aggregate([
+				{ $addFields: { createdBy: { $toObjectId: `$createdBy` } } },
+				{
+					$lookup: {
+						from: `students`,
+						localField: `createdBy`,
+						foreignField: `_id`,
+						as: `createdBy`,
 					},
-					{
-						[scope]: scopeId,
+				},
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
+				{
+					$match: {
+						$or: [
+							{ scope: `Class`, class: userClass },
+							{ scope: `Private`, createdBy: loggedInUser },
+							{ scope: `Friends`, "createdBy.friends": loggedInUser },
+						],
 					},
-				],
-			})
+				},
+			])
+			.skip(5 * (page - 1))
+			.limit(5)
 			.toArray();
 	} catch (error) {
 		return error;

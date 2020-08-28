@@ -19,8 +19,7 @@ module.exports = async (_, { data }, { authorization }) => {
 		await client.connect();
 
 		const { _id: loggedInUser, access } = await authenticate(authorization);
-		if (!permitted.includes(access))
-			throw new ForbiddenError(`Access Denied ⚠`);
+		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
 		const node = client.db(`RBMI`).collection(`teachers`);
 
@@ -33,10 +32,7 @@ module.exports = async (_, { data }, { authorization }) => {
 				error: `Couldn't find any department with provided details.`,
 			});
 
-		const student = await client
-			.db(`RBMI`)
-			.collection(`students`)
-			.findOne({ username: data.username });
+		const student = await client.db(`RBMI`).collection(`students`).findOne({ username: data.username });
 		if (student)
 			throw new UserInputError(`Username not available ⚠`, {
 				error: `${data.username} is already assigned to a student. Please choose another username.`,

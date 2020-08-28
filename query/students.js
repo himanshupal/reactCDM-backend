@@ -1,4 +1,4 @@
-const { ForbiddenError, UserInputError } = require(`apollo-server`);
+const { UserInputError } = require(`apollo-server`);
 const { MongoClient } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
@@ -12,10 +12,9 @@ module.exports = async (_, { class: className }, { authorization }) => {
 	try {
 		await client.connect();
 
-		const { access, classTeacherOf } = await authenticate(authorization);
-		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
+		const { access, classTeacherOf, class: userClass } = await authenticate(authorization);
 
-		if (!className && !classTeacherOf)
+		if (access !== `Student` && !className && !classTeacherOf)
 			throw new UserInputError(`Insufficient data ⚠`, {
 				error: `You must provide a class info to get students details.`,
 			});
@@ -34,7 +33,7 @@ module.exports = async (_, { class: className }, { authorization }) => {
 		return await client
 			.db(`RBMI`)
 			.collection(`students`)
-			.find({ class: className || classTeacherOf })
+			.find({ class: userClass || className || classTeacherOf })
 			.toArray();
 	} catch (error) {
 		return error;

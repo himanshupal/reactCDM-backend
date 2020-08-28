@@ -16,15 +16,11 @@ module.exports = async (_, { class: name, data }, { authorization }) => {
 		await client.connect();
 
 		const { _id: loggedInUser, access } = await authenticate(authorization);
-		if (!permitted.includes(access))
-			throw new ForbiddenError(`Access Denied ⚠`);
+		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
 		const node = client.db(`RBMI`).collection(`subjects`);
 
-		const check = await client
-			.db(`RBMI`)
-			.collection(`classes`)
-			.findOne({ name });
+		const check = await client.db(`RBMI`).collection(`classes`).findOne({ name });
 		if (!check)
 			throw new UserInputError(`Class not found ⚠`, {
 				error: `Couldn't find any class with provided details.`,
@@ -70,12 +66,7 @@ module.exports = async (_, { class: name, data }, { authorization }) => {
 										as: `teacher`,
 									},
 								},
-								{
-									$unwind: {
-										path: `$teacher`,
-										preserveNullAndEmptyArrays: true,
-									},
-								},
+								{ $unwind: { path: `$teacher`, preserveNullAndEmptyArrays: true } },
 								{
 									$lookup: {
 										from: `teachers`,
@@ -84,7 +75,7 @@ module.exports = async (_, { class: name, data }, { authorization }) => {
 										as: `createdBy`,
 									},
 								},
-								{ $unwind: `$createdBy` },
+								{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 							])
 							.toArray();
 

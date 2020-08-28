@@ -16,17 +16,13 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 		await client.connect();
 
 		const { _id: loggedInUser, access } = await authenticate(authorization);
-		if (!permitted.includes(access))
-			throw new ForbiddenError(`Access Denied ⚠`);
+		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
 		const node = client.db(`RBMI`).collection(`subjects`);
 
 		if (data.subjectCode || data.uniSubjectCode) {
 			const check = await node.findOne({
-				$or: [
-					{ subjectCode: data.subjectCode },
-					{ uniSubjectCode: data.uniSubjectCode },
-				],
+				$or: [{ subjectCode: data.subjectCode }, { uniSubjectCode: data.uniSubjectCode }],
 			});
 			if (check)
 				throw new UserInputError(`Already exists ⚠`, {
@@ -69,12 +65,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 						as: `teacher`,
 					},
 				},
-				{
-					$unwind: {
-						path: `$teacher`,
-						preserveNullAndEmptyArrays: true,
-					},
-				},
+				{ $unwind: { path: `$teacher`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -83,7 +74,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -92,7 +83,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 						as: `updatedBy`,
 					},
 				},
-				{ $unwind: `$updatedBy` },
+				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 

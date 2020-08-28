@@ -22,10 +22,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 		const node = client.db(`RBMI`).collection(`students`);
 
 		if (data.username) {
-			const teacher = await client
-				.db(`RBMI`)
-				.collection(`teachers`)
-				.findOne({ username: data.username });
+			const teacher = await client.db(`RBMI`).collection(`teachers`).findOne({ username: data.username });
 			if (teacher)
 				throw new UserInputError(`Username not available ⚠`, {
 					error: `${data.username} is already assigned to a teacher. Please choose another username.`,
@@ -72,7 +69,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -81,7 +78,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 						as: `updatedBy`,
 					},
 				},
-				{ $unwind: `$updatedBy` },
+				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 

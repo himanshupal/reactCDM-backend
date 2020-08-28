@@ -21,14 +21,6 @@ module.exports = async (_, { username }, { authorization }) => {
 				error: `You do not have enough permission to view other teacher's specific details.`,
 			});
 
-		if (username) {
-			const check = await client.db(`RBMI`).collection(`teachers`).findOne({ username });
-			if (!check)
-				throw new UserInputError(`Not Found ⚠`, {
-					error: `Couldn't find the teacher you've provided username for.`,
-				});
-		}
-
 		const [teacher] = await client
 			.db(`RBMI`)
 			.collection(`teachers`)
@@ -49,12 +41,7 @@ module.exports = async (_, { username }, { authorization }) => {
 						as: `classTeacherOf`,
 					},
 				},
-				{
-					$unwind: {
-						path: `$classTeacherOf`,
-						preserveNullAndEmptyArrays: true,
-					},
-				},
+				{ $unwind: { path: `$classTeacherOf`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `subjects`,
@@ -71,7 +58,7 @@ module.exports = async (_, { username }, { authorization }) => {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -83,6 +70,11 @@ module.exports = async (_, { username }, { authorization }) => {
 				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
+
+		if (!teacher)
+			throw new UserInputError(`Not Found ⚠`, {
+				error: `Couldn't find the teacher you've provided username for.`,
+			});
 
 		return teacher;
 	} catch (error) {

@@ -63,7 +63,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 

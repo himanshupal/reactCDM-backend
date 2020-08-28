@@ -67,7 +67,7 @@ module.exports = async (_, { username, password }) => {
 						username: teacher.username,
 						department: teacher.department,
 						access: teacher.designation,
-						classTeacherOf: teacher.classTeacherOf._id.toString(),
+						classTeacherOf: teacher.classTeacherOf && teacher.classTeacherOf._id.toString(),
 					},
 					process.env.jwt_secret,
 					jwtConfig

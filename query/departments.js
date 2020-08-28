@@ -34,7 +34,7 @@ module.exports = async (_, __, { authorization }) => {
 						as: `director`,
 					},
 				},
-				{ $unwind: `$director` },
+				{ $unwind: { path: `$director`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -43,7 +43,7 @@ module.exports = async (_, __, { authorization }) => {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 	} catch (error) {

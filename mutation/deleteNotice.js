@@ -32,7 +32,7 @@ module.exports = async (_, { _id }, { authorization }) => {
 
 		if (permitted.indexOf(editor.designation) < permitted.indexOf(creator.designation))
 			throw new UserInputError(`Access Denied ⚠`, {
-				error: `You can only delete notices created by you or lower authority.`,
+				error: `You can only delete notices created by you or someone with lower authority than yours.`,
 			});
 
 		const { deletedCount } = await node.deleteOne({ _id: ObjectId(_id) });

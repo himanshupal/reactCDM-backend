@@ -1,8 +1,6 @@
-const { MongoClient, ObjectId } = require(`mongodb`);
+const { MongoClient } = require(`mongodb`);
 
-const authenticate = require(`../checkAuth`);
-
-module.exports = async (_, { page }, { authorization }) => {
+module.exports = async (_, { page }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -12,12 +10,35 @@ module.exports = async (_, { page }, { authorization }) => {
 	try {
 		await client.connect();
 
-		await authenticate(authorization);
-
 		return await client
 			.db(`RBMI`)
 			.collection(`notices`)
-			.aggregate([])
+			.aggregate([
+				{
+					$addFields: {
+						createdBy: { $toObjectId: `$createdBy` },
+						updatedBy: { $toObjectId: `$updatedBy` },
+					},
+				},
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `createdBy`,
+						foreignField: `_id`,
+						as: `createdBy`,
+					},
+				},
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `updatedBy`,
+						foreignField: `_id`,
+						as: `updatedBy`,
+					},
+				},
+				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
+			])
 			.skip(5 * (page - 1))
 			.limit(5)
 			.toArray();

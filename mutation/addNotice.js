@@ -1,11 +1,11 @@
 const { UserInputError, ForbiddenError } = require(`apollo-server`);
-const { MongoClient, Timestamp, ObjectId } = require(`mongodb`);
+const { MongoClient, Timestamp } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
 
 const permitted = [`Director`, `Head of Department`, `Associate Professor`];
 
-module.exports = async (_, { data: { scope, subject, scopeId, description } }, { authorization }) => {
+module.exports = async (_, { data: { scope, subject, validFor, description } }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -20,39 +20,30 @@ module.exports = async (_, { data: { scope, subject, scopeId, description } }, {
 
 		const node = client.db(`RBMI`).collection(`notices`);
 
-		if (!subject && !description)
+		if (!subject && !description && !scope && !validFor)
 			throw new UserInputError(`Argument Missing ⚠`, {
-				error: `You must provide a subject with description to add notice.`,
+				error: `All fields are required.`,
 			});
 
-		if (![`Class`, `Course`, `Department`].includes(scope || `Department`))
+		if (![`Class`, `Course`, `Department`].includes(scope))
 			throw new UserInputError(`Access Denied ⚠`, {
 				error: `Notices can be provided only for class, course or for a department.`,
 			});
 
-		if (scope && !scopeId)
-			throw new UserInputError(`Argument Missing ⚠`, {
-				error: `You must provide info of ${scope.toLowerCase()} to add notice for.`,
+		const check = await client
+			.db(`RBMI`)
+			.collection(scope === `Class` ? `classes` : scope === `Course` ? `courses` : `departments`)
+			.findOne({ name: validFor });
+		if (!check)
+			throw new UserInputError(`${scope} Not Found ⚠`, {
+				error: `Couldn't find any ${scope.toLowerCase()} with provided details.`,
 			});
 
-		if (scope) {
-			const check = await client
-				.db(`RBMI`)
-				.collection(scope === `Class` ? `classes` : scope === `Course` ? `courses` : `departments`)
-				.findOne({ _id: ObjectId(scopeId) });
-			if (!check)
-				throw new UserInputError(`${scope} Not Found ⚠`, {
-					error: `Couldn't find any ${
-						scope === `Class` ? `class` : scope === `Course` ? `course` : `department`
-					} with provided details.`,
-				});
-		}
-
 		const { insertedId } = await node.insertOne({
+			scope,
 			subject,
+			validFor,
 			description,
-			scopeId: scopeId || department,
-			scope: scope || `Department`,
 			createdAt: Timestamp.fromNumber(Date.now()),
 			createdBy: loggedInUser,
 		});
@@ -69,7 +60,7 @@ module.exports = async (_, { data: { scope, subject, scopeId, description } }, {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 

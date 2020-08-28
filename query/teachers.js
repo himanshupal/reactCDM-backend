@@ -19,11 +19,11 @@ module.exports = async (_, { department }, { authorization }) => {
 		if (department) {
 			const check = await client
 				.db(`RBMI`)
-				.collection(`courses`)
-				.findOne({ _id: ObjectId(course) });
+				.collection(`departments`)
+				.findOne({ _id: ObjectId(department) });
 			if (!check)
 				throw new UserInputError(`Not Found ⚠`, {
-					error: `Couldn't find the course you've provided.`,
+					error: `Couldn't find the department you're trying to find teachers of.`,
 				});
 		}
 
@@ -47,12 +47,7 @@ module.exports = async (_, { department }, { authorization }) => {
 						as: `classTeacherOf`,
 					},
 				},
-				{
-					$unwind: {
-						path: `$classTeacherOf`,
-						preserveNullAndEmptyArrays: true,
-					},
-				},
+				{ $unwind: { path: `$classTeacherOf`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `subjects`,

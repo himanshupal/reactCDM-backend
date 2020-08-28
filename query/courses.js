@@ -45,7 +45,7 @@ module.exports = async (_, { department: queryDpt }, { authorization }) => {
 							as: `headOfDepartment`,
 						},
 					},
-					{ $unwind: `$headOfDepartment` },
+					{ $unwind: { path: `$headOfDepartment`, preserveNullAndEmptyArrays: true } },
 					{
 						$lookup: {
 							from: `teachers`,
@@ -54,7 +54,7 @@ module.exports = async (_, { department: queryDpt }, { authorization }) => {
 							as: `createdBy`,
 						},
 					},
-					{ $unwind: `$createdBy` },
+					{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 				])
 				.toArray();
 
@@ -75,7 +75,7 @@ module.exports = async (_, { department: queryDpt }, { authorization }) => {
 						as: `headOfDepartment`,
 					},
 				},
-				{ $unwind: `$headOfDepartment` },
+				{ $unwind: { path: `$headOfDepartment`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -84,7 +84,7 @@ module.exports = async (_, { department: queryDpt }, { authorization }) => {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 	} catch (error) {

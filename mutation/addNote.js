@@ -60,7 +60,7 @@ module.exports = async (_, { data: { scope, subject, description } }, { authoriz
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 

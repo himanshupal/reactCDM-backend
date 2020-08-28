@@ -41,10 +41,7 @@ module.exports = async (_, { data }, { authorization }) => {
 		const { modifiedCount } = await client
 			.db(`RBMI`)
 			.collection(`teachers`)
-			.updateOne(
-				{ _id: ObjectId(data.director) },
-				{ $set: { designation: `Director` } }
-			);
+			.updateOne({ _id: ObjectId(data.director) }, { $set: { designation: `Director` } });
 
 		if (!modifiedCount)
 			throw new UserInputError(`Unknown Error ⚠`, {
@@ -74,7 +71,7 @@ module.exports = async (_, { data }, { authorization }) => {
 						as: `director`,
 					},
 				},
-				{ $unwind: `$director` },
+				{ $unwind: { path: `$director`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -83,7 +80,7 @@ module.exports = async (_, { data }, { authorization }) => {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 

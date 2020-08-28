@@ -18,19 +18,13 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 
 		const node = client.db(`RBMI`).collection(`teachers`);
 
-		if (
-			_id !== loggedInUser &&
-			(access === `Associate Professor` || access === `Assistant Professor`)
-		)
+		if (_id !== loggedInUser && (access === `Associate Professor` || access === `Assistant Professor`))
 			throw new UserInputError(`Not Allowed ⚠`, {
 				error: `You do not have enough permission to change other teacher's details.`,
 			});
 
 		if (data.username) {
-			const student = await client
-				.db(`RBMI`)
-				.collection(`students`)
-				.findOne({ username: data.username });
+			const student = await client.db(`RBMI`).collection(`students`).findOne({ username: data.username });
 			if (student)
 				throw new UserInputError(`Username not available ⚠`, {
 					error: `${data.username} is already assigned to a student. Please choose another username.`,
@@ -78,7 +72,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 						as: `department`,
 					},
 				},
-				{ $unwind: `$department` },
+				{ $unwind: { path: `$department`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -87,7 +81,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -96,7 +90,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 						as: `updatedBy`,
 					},
 				},
-				{ $unwind: `$updatedBy` },
+				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 

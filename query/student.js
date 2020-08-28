@@ -20,12 +20,6 @@ module.exports = async (_, { username }, { authorization }) => {
 				error: `You must provide a username to get student's details.`,
 			});
 
-		const check = await client.db(`RBMI`).collection(`students`).findOne({ username });
-		if (!check)
-			throw new UserInputError(`Not Found ⚠`, {
-				error: `Couldn't find the student you've provided username for.`,
-			});
-
 		const [student] = await client
 			.db(`RBMI`)
 			.collection(`students`)
@@ -70,7 +64,7 @@ module.exports = async (_, { username }, { authorization }) => {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -82,6 +76,11 @@ module.exports = async (_, { username }, { authorization }) => {
 				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
+
+		if (!student)
+			throw new UserInputError(`Not Found ⚠`, {
+				error: `Couldn't find the student you've provided username for.`,
+			});
 
 		return student;
 	} catch (error) {

@@ -28,7 +28,7 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 
 		const { insertedId } = await node.insertOne({
 			class: className,
-			range: data.filter((x) => x.from && x.to),
+			days: data.filter((x) => x.from && x.to),
 			createdAt: Timestamp.fromNumber(Date.now()),
 			createdBy: loggedInUser,
 		});
@@ -41,17 +41,37 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 						from: `teachers`,
 						let: { teacher: { $toObjectId: `days.teacher` } },
 						pipeline: [{ $match: { $expr: { $eq: [`$_id`, `$$teacher`] } } }],
-						as: `teacher`,
+						as: `days.teacher`,
 					},
 				},
+				{ $unwind: { path: `$days.teacher`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
-						from: `subject`,
+						from: `subjects`,
 						let: { subject: { $toObjectId: `days.subject` } },
 						pipeline: [{ $match: { $expr: { $eq: [`$_id`, `$$subject`] } } }],
-						as: `subject`,
+						as: `days.subject`,
 					},
 				},
+				{ $unwind: { path: `$days.subject`, preserveNullAndEmptyArrays: true } },
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `createdBy`,
+						foreignField: `_id`,
+						as: `createdBy`,
+					},
+				},
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `updatedBy`,
+						foreignField: `_id`,
+						as: `updatedBy`,
+					},
+				},
+				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 

@@ -24,7 +24,7 @@ module.exports = async (_, { course }, { authorization }) => {
 				error: `Couldn't find the course you've provided details for.`,
 			});
 
-		const res = await client
+		return await client
 			.db(`RBMI`)
 			.collection(`classes`)
 			.aggregate([
@@ -52,7 +52,7 @@ module.exports = async (_, { course }, { authorization }) => {
 									as: `createdBy`,
 								},
 							},
-							{ $unwind: `$createdBy` },
+							{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 							{
 								$lookup: {
 									from: `teachers`,
@@ -91,7 +91,7 @@ module.exports = async (_, { course }, { authorization }) => {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -112,10 +112,6 @@ module.exports = async (_, { course }, { authorization }) => {
 				{ $addFields: { totalStudents: { $size: `$totalStudents` } } },
 			])
 			.toArray();
-
-		console.log(res);
-
-		return res;
 	} catch (error) {
 		return error;
 	} finally {

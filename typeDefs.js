@@ -159,14 +159,15 @@ module.exports = gql`
 	input PageInput {
 		scope: String
 		subject: String
-		scopeId: ID
+		validFor: String
 		description: String
 	}
 	type Page {
 		_id: ID
 		scope: String
+		edited: Boolean
 		subject: String
-		scopeId: Department
+		validFor: String
 		description: String
 
 		createdAt: Float

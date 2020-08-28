@@ -70,7 +70,7 @@ module.exports = async (_, { data }, { authorization }) => {
 						as: `department`,
 					},
 				},
-				{ $unwind: `$department` },
+				{ $unwind: { path: `$department`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -79,7 +79,7 @@ module.exports = async (_, { data }, { authorization }) => {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 

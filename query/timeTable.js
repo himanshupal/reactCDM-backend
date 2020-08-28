@@ -15,7 +15,7 @@ module.exports = async (_, { class: className }, { authorization }) => {
 		const { access, class: studentOf, classTeacherOf } = await authenticate(authorization);
 		if (access !== `Student` && !className)
 			throw new UserInputError(`Insufficient data ⚠`, {
-				error: `You must provide a class info to get timeTable.`,
+				error: `You must provide a class info to get timetable.`,
 			});
 
 		const node = client.db(`RBMI`).collection(`timetable`);
@@ -26,7 +26,7 @@ module.exports = async (_, { class: className }, { authorization }) => {
 		const check = await node.findOne({ class: className });
 		if (!check)
 			throw new UserInputError(`Not Found ⚠`, {
-				error: `Couldn't find the class you've provided details for.`,
+				error: `Couldn't find the class you're trying to get timetable for.`,
 			});
 
 		const [timeTable] = await node
@@ -48,6 +48,24 @@ module.exports = async (_, { class: className }, { authorization }) => {
 						as: `subject`,
 					},
 				},
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `createdBy`,
+						foreignField: `_id`,
+						as: `createdBy`,
+					},
+				},
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `updatedBy`,
+						foreignField: `_id`,
+						as: `updatedBy`,
+					},
+				},
+				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 

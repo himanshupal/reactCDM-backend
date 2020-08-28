@@ -20,12 +20,6 @@ module.exports = async (_, { class: className, month, year }, { authorization })
 		if (access !== `Student` && !className && !classTeacherOf)
 			throw new UserInputError(`Insufficient data ⚠`, { error: `You must provide Class info. to get details of.` });
 
-		const check = await node.findOne({ class: className });
-		if (!check)
-			throw new UserInputError(`Not Found ⚠`, {
-				error: `Couldn't find the class you've provided details for.`,
-			});
-
 		return await node
 			.aggregate([
 				{
@@ -37,8 +31,8 @@ module.exports = async (_, { class: className, month, year }, { authorization })
 				},
 				{
 					$addFields: {
-						students: { $toObjectId: `$students` },
 						createdBy: { $toObjectId: `$createdBy` },
+						students: { $map: { input: `$students`, as: `student`, in: { $toObjectId: `$$student` } } },
 					},
 				},
 				{
@@ -57,7 +51,7 @@ module.exports = async (_, { class: className, month, year }, { authorization })
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 	} catch (error) {

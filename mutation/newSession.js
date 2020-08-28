@@ -16,8 +16,7 @@ module.exports = async (_, { course, data }, { authorization }) => {
 		await client.connect();
 
 		const { _id: loggedInUser, access } = await authenticate(authorization);
-		if (!permitted.includes(access))
-			throw new ForbiddenError(`Access Denied ⚠`);
+		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
 		const node = client.db(`RBMI`).collection(`classes`);
 
@@ -43,12 +42,9 @@ module.exports = async (_, { course, data }, { authorization }) => {
 							course,
 						});
 						if (already)
-							throw new UserInputError(
-								`Class ${current.newName} already exists ⚠`,
-								{
-									error: `There is already a class with ${current.newName}. If you think this is an error, try updating the class or contact Admin.`,
-								}
-							);
+							throw new UserInputError(`Class ${current.newName} already exists ⚠`, {
+								error: `There is already a class with ${current.newName}. If you think this is an error, try updating the class or contact Admin.`,
+							});
 
 						const assigned = await node.findOne({
 							classTeacher: current.classTeacher,
@@ -121,12 +117,7 @@ module.exports = async (_, { course, data }, { authorization }) => {
 										as: `classTeacher`,
 									},
 								},
-								{
-									$unwind: {
-										path: `$classTeacher`,
-										preserveNullAndEmptyArrays: true,
-									},
-								},
+								{ $unwind: { path: `$classTeacher`, preserveNullAndEmptyArrays: true } },
 								{
 									$lookup: {
 										from: `teachers`,
@@ -135,7 +126,7 @@ module.exports = async (_, { course, data }, { authorization }) => {
 										as: `createdBy`,
 									},
 								},
-								{ $unwind: `$createdBy` },
+								{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 								{
 									$lookup: {
 										from: `teachers`,
@@ -144,12 +135,7 @@ module.exports = async (_, { course, data }, { authorization }) => {
 										as: `updatedBy`,
 									},
 								},
-								{
-									$unwind: {
-										path: `$updatedBy`,
-										preserveNullAndEmptyArrays: true,
-									},
-								},
+								{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 							])
 							.toArray();
 

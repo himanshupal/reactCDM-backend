@@ -24,9 +24,9 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 			{ _id: ObjectId(_id) },
 			{
 				$set: {
-					range: data.filter((x) => x.from && x.to),
-					createdAt: Timestamp.fromNumber(Date.now()),
-					createdBy: loggedInUser,
+					days: data.filter((x) => x.from && x.to),
+					updatedAt: Timestamp.fromNumber(Date.now()),
+					updatedBy: loggedInUser,
 				},
 			},
 			{ returnOriginal: false }
@@ -45,17 +45,35 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 						from: `teachers`,
 						let: { teacher: { $toObjectId: `days.teacher` } },
 						pipeline: [{ $match: { $expr: { $eq: [`$_id`, `$$teacher`] } } }],
-						as: `teacher`,
+						as: `days.teacher`,
 					},
 				},
 				{
 					$lookup: {
-						from: `subject`,
+						from: `subjects`,
 						let: { subject: { $toObjectId: `days.subject` } },
 						pipeline: [{ $match: { $expr: { $eq: [`$_id`, `$$subject`] } } }],
-						as: `subject`,
+						as: `days.subject`,
 					},
 				},
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `createdBy`,
+						foreignField: `_id`,
+						as: `createdBy`,
+					},
+				},
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `updatedBy`,
+						foreignField: `_id`,
+						as: `updatedBy`,
+					},
+				},
+				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 

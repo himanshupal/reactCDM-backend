@@ -40,11 +40,7 @@ module.exports = async (_, { data }, { authorization }) => {
 			});
 
 		const check = await node.findOne({
-			$or: [
-				{ name: data.name },
-				{ identifier: data.identifier },
-				{ headOfDepartment: data.headOfDepartment },
-			],
+			$or: [{ name: data.name }, { identifier: data.identifier }, { headOfDepartment: data.headOfDepartment }],
 		});
 
 		if (check) {
@@ -65,10 +61,7 @@ module.exports = async (_, { data }, { authorization }) => {
 		const { modifiedCount } = await client
 			.db(`RBMI`)
 			.collection(`teachers`)
-			.updateOne(
-				{ _id: ObjectId(data.headOfDepartment) },
-				{ $set: { designation: `Head of Department` } }
-			);
+			.updateOne({ _id: ObjectId(data.headOfDepartment) }, { $set: { designation: `Head of Department` } });
 
 		if (!modifiedCount)
 			throw new UserInputError(`Unknown Error ⚠`, {
@@ -98,7 +91,7 @@ module.exports = async (_, { data }, { authorization }) => {
 						as: `headOfDepartment`,
 					},
 				},
-				{ $unwind: `$headOfDepartment` },
+				{ $unwind: { path: `$headOfDepartment`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -107,7 +100,7 @@ module.exports = async (_, { data }, { authorization }) => {
 						as: `createdBy`,
 					},
 				},
-				{ $unwind: `$createdBy` },
+				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 

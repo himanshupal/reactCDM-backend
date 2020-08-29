@@ -30,6 +30,23 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 				throw new UserInputError(`Already exists ⚠`, {
 					error: `There is already a class with same name.`,
 				});
+
+			const { name } = await node.findOne({ _id: ObjectId(_id) });
+
+			await client
+				.db(`RBMI`)
+				.collection(`notices`)
+				.updateMany({ scope: `Class`, validFor: name }, { $set: { validFor: data.name } });
+
+			await client
+				.db(`RBMI`)
+				.collection(`subjects`)
+				.updateMany({ class: name }, { $set: { class: data.name } });
+
+			await client
+				.db(`RBMI`)
+				.collection(`timetables`)
+				.updateMany({ class: name }, { $set: { class: data.name } });
 		}
 
 		if (data.classTeacher) {

@@ -18,7 +18,7 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`timetable`);
+		const node = client.db(`RBMI`).collection(`timetables`);
 
 		const check = await node.findOne({ class: className });
 		if (check)

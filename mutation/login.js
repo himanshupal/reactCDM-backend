@@ -23,9 +23,14 @@ module.exports = async (_, { username, password }) => {
 		if (student) {
 			const verified = await verify(student.password, password);
 
-			if (verified)
+			if (verified) {
+				await client
+					.db(`RBMI`)
+					.collection(`students`)
+					.updateOne({ _id: student._id }, { $set: { lastLogin: Date.now() } });
 				return sign(
 					{
+						lastLogin: student.lastLogin,
 						_id: student._id.toString(),
 						username: student.username,
 						class: student.class,
@@ -34,7 +39,7 @@ module.exports = async (_, { username, password }) => {
 					process.env.jwt_secret,
 					jwtConfig
 				);
-			else
+			} else
 				throw new UserInputError(`Incorrect Password ⚠`, {
 					error: `Please try again. Contact admin if you're locked out.`,
 				});
@@ -60,19 +65,24 @@ module.exports = async (_, { username, password }) => {
 		if (teacher) {
 			const verified = await verify(teacher.password, password);
 
-			if (verified)
+			if (verified) {
+				await client
+					.db(`RBMI`)
+					.collection(`teachers`)
+					.updateOne({ _id: teacher._id }, { $set: { lastLogin: Date.now() } });
 				return sign(
 					{
 						_id: teacher._id.toString(),
 						username: teacher.username,
 						department: teacher.department,
 						access: teacher.designation,
+						lastLogin: teacher.lastLogin,
 						classTeacherOf: teacher.classTeacherOf && teacher.classTeacherOf._id.toString(),
 					},
 					process.env.jwt_secret,
 					jwtConfig
 				);
-			else
+			} else
 				throw new UserInputError(`Incorrect Password ⚠`, {
 					error: `Please try again. Contact admin if you're locked out.`,
 				});

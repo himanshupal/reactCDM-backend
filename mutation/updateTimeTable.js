@@ -18,7 +18,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`timetable`);
+		const node = client.db(`RBMI`).collection(`timetables`);
 
 		const { lastErrorObject, value } = await node.findOneAndUpdate(
 			{ _id: ObjectId(_id) },
@@ -34,7 +34,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 
 		if (!lastErrorObject.n)
 			throw new UserInputError(`Unknown Error ⚠`, {
-				error: `Error creating/updating class. Please try again or contact admin if issue persists.`,
+				error: `Error updating timetable. Please try again or contact admin if issue persists.`,
 			});
 
 		const [timeTable] = await node

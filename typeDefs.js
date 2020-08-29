@@ -167,7 +167,7 @@ module.exports = gql`
 		scope: String
 		edited: Boolean
 		subject: String
-		validFor: String
+		validFor: String # Name of Scope
 		description: String
 
 		createdAt: Float
@@ -314,21 +314,26 @@ module.exports = gql`
 
 		addSubject(class: String!, data: [SubjectInput]!): [Subject]!
 		updateSubject(_id: ID!, data: SubjectInput!): Subject!
+		deleteSubject(_id: ID!): Boolean!
 
 		newSession(course: ID!, data: [ClassInput]!): [Class]!
 		updateClass(_id: ID!, data: ClassInput!): Class!
+		deleteClass(_id: ID!): Boolean!
 
 		addDepartment(data: DepartmentInput!): Department!
 		updateDepartment(_id: ID!, data: DepartmentInput!): Department!
 
 		addCourse(data: CourseInput!): Course!
 		updateCourse(_id: ID!, data: CourseInput!): Course!
+		deleteCourse(_id: ID!, classes: Boolean): Boolean!
 
 		addTeacher(data: TeacherInput!): Teacher!
 		updateTeacher(_id: ID!, data: TeacherInput!): Teacher!
+		deleteTeacher(_id: ID!): Boolean!
 
 		addStudent(data: StudentInput!): Student!
 		updateStudent(_id: ID!, data: StudentInput!): Student!
+		deleteStudent(_id: ID!): Boolean!
 
 		addFriends(friends: [ID]!): [Student]!
 		updateFriends(friends: [ID]!): [Student]!

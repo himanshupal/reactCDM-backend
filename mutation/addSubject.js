@@ -2,6 +2,7 @@ const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, Timestamp } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 const permitted = [`Director`, `Head of Department`, `Associate Professor`];
 
@@ -18,9 +19,9 @@ module.exports = async (_, { class: name, data }, { authorization }) => {
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`subjects`);
+		const node = client.db(dbName).collection(`subjects`);
 
-		const check = await client.db(`RBMI`).collection(`classes`).findOne({ name });
+		const check = await client.db(dbName).collection(`classes`).findOne({ name });
 		if (!check)
 			throw new UserInputError(`Class not found ⚠`, {
 				error: `Couldn't find any class with provided details.`,

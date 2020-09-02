@@ -2,6 +2,7 @@ const { ForbiddenError } = require(`apollo-server`);
 const { MongoClient } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, __, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -17,13 +18,14 @@ module.exports = async (_, __, { authorization }) => {
 		if (access !== `Director`) throw new ForbiddenError(`Access Denied ⚠`);
 
 		return await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`departments`)
 			.aggregate([
 				{
 					$addFields: {
 						director: { $toObjectId: `$director` },
 						createdBy: { $toObjectId: `$createdBy` },
+						updatedBy: { $toObjectId: `$updatedBy` },
 					},
 				},
 				{
@@ -44,7 +46,17 @@ module.exports = async (_, __, { authorization }) => {
 					},
 				},
 				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `updatedBy`,
+						foreignField: `_id`,
+						as: `updatedBy`,
+					},
+				},
+				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
+			.sort({ name: 1 })
 			.toArray();
 	} catch (error) {
 		return error;

@@ -2,6 +2,7 @@ const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, Timestamp } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 const permitted = [`Director`, `Head of Department`, `Associate Professor`];
 
@@ -18,7 +19,7 @@ module.exports = async (_, { data: { scope, subject, validFor, description } }, 
 		const { _id: loggedInUser, access, department } = await authenticate(authorization);
 		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`notices`);
+		const node = client.db(dbName).collection(`notices`);
 
 		if (!subject && !description && !scope && !validFor)
 			throw new UserInputError(`Argument Missing ⚠`, {
@@ -31,7 +32,7 @@ module.exports = async (_, { data: { scope, subject, validFor, description } }, 
 			});
 
 		const check = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(scope === `Class` ? `classes` : scope === `Course` ? `courses` : `departments`)
 			.findOne({ name: validFor });
 		if (!check)

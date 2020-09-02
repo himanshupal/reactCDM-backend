@@ -2,6 +2,7 @@ const { UserInputError } = require(`apollo-server`);
 const { MongoClient } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { class: className }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -21,7 +22,7 @@ module.exports = async (_, { class: className }, { authorization }) => {
 
 		if (className) {
 			const check = await client
-				.db(`RBMI`)
+				.db(dbName)
 				.collection(`classes`)
 				.findOne({ _id: ObjectId(className) });
 			if (!check)
@@ -31,9 +32,10 @@ module.exports = async (_, { class: className }, { authorization }) => {
 		}
 
 		return await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`students`)
 			.find({ class: userClass || className || classTeacherOf })
+			.sort({ "name.first": 1 })
 			.toArray();
 	} catch (error) {
 		return error;

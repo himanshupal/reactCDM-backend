@@ -2,6 +2,7 @@ const { UserInputError } = require(`apollo-server`);
 const { MongoClient } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { class: className }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -18,7 +19,7 @@ module.exports = async (_, { class: className }, { authorization }) => {
 				error: `You must provide a class info to get timetable.`,
 			});
 
-		const node = client.db(`RBMI`).collection(`timetable`);
+		const node = client.db(dbName).collection(`timetable`);
 
 		if (!classTeacherOf || !className)
 			throw new UserInputError(`Insufficient data ⚠`, { error: `You must provide Class info. to get details of.` });

@@ -2,6 +2,7 @@ const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 const permitted = [`Director`, `Head of Department`];
 
@@ -20,7 +21,7 @@ module.exports = async (_, { _id, classes }, { authorization }) => {
 
 		const deleteCourse = async () => {
 			const { deletedCount } = await client
-				.db(`RBMI`)
+				.db(dbName)
 				.collection(`courses`)
 				.deleteOne({ _id: ObjectId(_id) });
 
@@ -31,81 +32,45 @@ module.exports = async (_, { _id, classes }, { authorization }) => {
 		};
 
 		const deleteClasses = async () => {
-			const node = client.db(`RBMI`).collection(`classes`);
+			const node = client.db(dbName).collection(`classes`);
 
 			const classIt = await node.find({ course: _id }, { projection: { _id: true, name: true } }).toArray();
 
-			const { deletedCount } = await node.deleteMany({ course: _id });
+			const {
+				deletedCount,
+				result: { n },
+			} = await node.deleteMany({ course: _id });
 
-			if (!deletedCount)
+			if (!deletedCount & n)
 				throw new UserInputError(`Unknown Error ⚠`, {
-					error: `Error deleting class. Please try again or contact admin if issue persists.`,
+					error: `Error deleting classes. Please try again or contact admin if issue persists.`,
 				});
 
-			await Promise.all(
-				classIt.forEach(async ({ _id, name }) => {
-					try {
-						const { deletedCount: deletedStudents } = await client
-							.db(`RBMI`)
-							.collection(`students`)
-							.deleteMany({ class: _id.toString() });
+			if (classIt.length > 0)
+				await Promise.all(
+					classIt.forEach(async ({ _id, name }) => {
+						try {
+							await client.db(dbName).collection(`students`).deleteMany({ class: _id.toString() });
 
-						if (!deletedStudents)
-							throw new UserInputError(`Unknown Error ⚠`, {
-								error: `Error deleting students. Please try again or contact admin if issue persists.`,
-							});
+							await client.db(dbName).collection(`notes`).deleteMany({ scope: `Class`, class: _id.toString() });
 
-						const { deletedCount: deletedNotes } = await client
-							.db(`RBMI`)
-							.collection(`notes`)
-							.deleteMany({ scope: `Class`, class: _id.toString() });
+							await client.db(dbName).collection(`notices`).deleteMany({ scope: `Class`, validFor: name });
 
-						if (!deletedNotes)
-							throw new UserInputError(`Unknown Error ⚠`, {
-								error: `Error deleting notes. Please try again or contact admin if issue persists.`,
-							});
+							await client.db(dbName).collection(`subjects`).deleteMany({ class: name });
 
-						const { deletedCount: deletedNotices } = await client
-							.db(`RBMI`)
-							.collection(`notices`)
-							.deleteMany({ scope: `Class`, validFor: name });
-
-						if (!deletedNotices)
-							throw new UserInputError(`Unknown Error ⚠`, {
-								error: `Error deleting notices. Please try again or contact admin if issue persists.`,
-							});
-
-						const { deletedCount: deletedSubjects } = await client
-							.db(`RBMI`)
-							.collection(`subjects`)
-							.deleteMany({ class: name });
-
-						if (!deletedSubjects)
-							throw new UserInputError(`Unknown Error ⚠`, {
-								error: `Error deleting subjects. Please try again or contact admin if issue persists.`,
-							});
-
-						const { deletedCount: deletedTimeTable } = await client
-							.db(`RBMI`)
-							.collection(`timetables`)
-							.deleteMany({ class: name });
-
-						if (!deletedTimeTable)
-							throw new UserInputError(`Unknown Error ⚠`, {
-								error: `Error deleting timetable. Please try again or contact admin if issue persists.`,
-							});
-					} catch (error) {
-						throw error;
-					}
-				})
-			);
+							await client.db(dbName).collection(`timetables`).deleteMany({ class: name });
+						} catch (error) {
+							throw error;
+						}
+					})
+				);
 		};
 
 		if (classes) {
 			await deleteCourse();
 			await deleteClasses();
 		} else {
-			await deleteCourse;
+			await deleteCourse();
 		}
 
 		return true;

@@ -2,6 +2,7 @@ const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, ObjectId, Timestamp } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 const permitted = [`Director`, `Head of Department`];
 
@@ -18,7 +19,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`courses`);
+		const node = client.db(dbName).collection(`courses`);
 
 		if (data.name) {
 			const check = await node.findOne({ name: data.name });
@@ -52,7 +53,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 				});
 
 			const { modifiedCount } = await client
-				.db(`RBMI`)
+				.db(dbName)
 				.collection(`teachers`)
 				.updateOne({ _id: ObjectId(previous.headOfDepartment) }, { $set: { designation: `Associate Professor` } });
 

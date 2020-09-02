@@ -2,6 +2,7 @@ const { UserInputError } = require(`apollo-server`);
 const { MongoClient, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { friends }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -16,7 +17,7 @@ module.exports = async (_, { friends }, { authorization }) => {
 		const { _id, access } = await authenticate(authorization);
 		if (access !== `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`students`);
+		const node = client.db(dbName).collection(`students`);
 
 		const { lastErrorObject } = await node.findOneAndUpdate(
 			{ _id: ObjectId(_id) },

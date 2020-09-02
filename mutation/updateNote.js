@@ -2,6 +2,7 @@ const { UserInputError } = require(`apollo-server`);
 const { MongoClient, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { _id, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -16,7 +17,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 		const { _id: loggedInUser, access, class: userClass } = await authenticate(authorization);
 		if (access !== `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`notes`);
+		const node = client.db(dbName).collection(`notes`);
 
 		if (data.scope && ![`Class`, `Private`, `Friends`].includes(data.scope))
 			throw new UserInputError(`Invalid Argument ⚠`, {

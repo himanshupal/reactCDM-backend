@@ -2,6 +2,7 @@ const { ForbiddenError, UserInputError } = require(`apollo-server`);
 const { MongoClient } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { username }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -21,7 +22,7 @@ module.exports = async (_, { username }, { authorization }) => {
 			});
 
 		const [student] = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`students`)
 			.aggregate([
 				{

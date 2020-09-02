@@ -219,7 +219,6 @@ module.exports = gql`
 
 	input CourseInput {
 		name: String
-		department: ID
 		duration: String
 		identifier: String
 		headOfDepartment: ID
@@ -323,7 +322,7 @@ module.exports = gql`
 		addDepartment(data: DepartmentInput!): Department!
 		updateDepartment(_id: ID!, data: DepartmentInput!): Department!
 
-		addCourse(data: CourseInput!): Course!
+		addCourse(department: ID!, data: CourseInput!): Course!
 		updateCourse(_id: ID!, data: CourseInput!): Course!
 		deleteCourse(_id: ID!, classes: Boolean): Boolean!
 

@@ -2,6 +2,7 @@ const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 const permitted = [`Director`, `Head of Department`];
 
@@ -19,7 +20,7 @@ module.exports = async (_, { _id }, { authorization }) => {
 		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
 		const { deletedCount } = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`teachers`)
 			.deleteOne({ _id: ObjectId(_id) });
 

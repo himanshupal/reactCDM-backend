@@ -2,6 +2,7 @@ const { ForbiddenError, UserInputError } = require(`apollo-server`);
 const { MongoClient, Timestamp } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 const permitted = [`Director`, `Head of Department`];
 
@@ -18,7 +19,7 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`timetables`);
+		const node = client.db(dbName).collection(`timetables`);
 
 		const check = await node.findOne({ class: className });
 		if (check)

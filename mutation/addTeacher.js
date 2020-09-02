@@ -1,10 +1,10 @@
 const { UserInputError, ForbiddenError } = require(`apollo-server`);
-const { MongoClient, Timestamp } = require(`mongodb`);
+const { MongoClient, ObjectId, Timestamp } = require(`mongodb`);
 const { blake2bHex } = require(`blakejs`);
 const { hash } = require(`argon2`);
 
 const authenticate = require(`../checkAuth`);
-const { hashConfig } = require(`../config`);
+const { hashConfig, dbName } = require(`../config`);
 
 const permitted = [`Director`, `Head of Department`];
 
@@ -21,10 +21,10 @@ module.exports = async (_, { data }, { authorization }) => {
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`teachers`);
+		const node = client.db(dbName).collection(`teachers`);
 
 		const department = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`departments`)
 			.findOne({ _id: ObjectId(data.department) });
 		if (!department)
@@ -32,7 +32,7 @@ module.exports = async (_, { data }, { authorization }) => {
 				error: `Couldn't find any department with provided details.`,
 			});
 
-		const student = await client.db(`RBMI`).collection(`students`).findOne({ username: data.username });
+		const student = await client.db(dbName).collection(`students`).findOne({ username: data.username });
 		if (student)
 			throw new UserInputError(`Username not available ⚠`, {
 				error: `${data.username} is already assigned to a student. Please choose another username.`,

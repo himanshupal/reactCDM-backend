@@ -2,6 +2,7 @@ const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, ObjectId, Timestamp } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { _id, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -16,7 +17,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`teachers`);
+		const node = client.db(dbName).collection(`teachers`);
 
 		if (_id !== loggedInUser && (access === `Associate Professor` || access === `Assistant Professor`))
 			throw new UserInputError(`Not Allowed ⚠`, {
@@ -24,7 +25,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 			});
 
 		if (data.username) {
-			const student = await client.db(`RBMI`).collection(`students`).findOne({ username: data.username });
+			const student = await client.db(dbName).collection(`students`).findOne({ username: data.username });
 			if (student)
 				throw new UserInputError(`Username not available ⚠`, {
 					error: `${data.username} is already assigned to a student. Please choose another username.`,

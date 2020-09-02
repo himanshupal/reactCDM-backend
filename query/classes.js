@@ -1,6 +1,8 @@
+const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { course }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -16,7 +18,7 @@ module.exports = async (_, { course }, { authorization }) => {
 		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
 		const check = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`courses`)
 			.findOne({ _id: ObjectId(course) });
 		if (!check)
@@ -25,7 +27,7 @@ module.exports = async (_, { course }, { authorization }) => {
 			});
 
 		return await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`classes`)
 			.aggregate([
 				{ $match: { course } },
@@ -111,6 +113,7 @@ module.exports = async (_, { course }, { authorization }) => {
 				},
 				{ $addFields: { totalStudents: { $size: `$totalStudents` } } },
 			])
+			.sort({ name: 1 })
 			.toArray();
 	} catch (error) {
 		return error;

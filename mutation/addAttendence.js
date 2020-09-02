@@ -2,6 +2,7 @@ const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, Timestamp } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { class: className, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -16,7 +17,7 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`attendence`);
+		const node = client.db(dbName).collection(`attendence`);
 
 		if (data.holiday && data.students)
 			throw new UserInputError(`It's holiday ⚠`, {

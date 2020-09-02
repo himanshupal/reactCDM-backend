@@ -29,18 +29,23 @@ module.exports = {
 
 		addCourse: require(`./mutation/addCourse`),
 		updateCourse: require(`./mutation/updateCourse`),
+		deleteCourse: require(`./mutation/deleteCourse`),
 
 		addTeacher: require(`./mutation/addTeacher`),
 		updateTeacher: require(`./mutation/updateTeacher`),
+		deleteTeacher: require(`./mutation/deleteTeacher`),
 
 		addStudent: require(`./mutation/addStudent`),
 		updateStudent: require(`./mutation/updateStudent`),
+		deleteStudent: require(`./mutation/deleteStudent`),
 
 		newSession: require(`./mutation/newSession`),
 		updateClass: require(`./mutation/updateClass`),
+		deleteClass: require(`./mutation/deleteClass`),
 
 		updateSubject: require(`./mutation/updateSubject`),
 		addSubject: require(`./mutation/addSubject`),
+		deleteSubject: require(`./mutation/deleteSubject`),
 
 		addTimeTable: require(`./mutation/addTimeTable`),
 		updateTimeTable: require(`./mutation/updateTimeTable`),

@@ -1,5 +1,7 @@
 const { MongoClient } = require(`mongodb`);
 
+const { dbName } = require(`../config`);
+
 module.exports = async (_, { page }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
@@ -11,7 +13,7 @@ module.exports = async (_, { page }) => {
 		await client.connect();
 
 		return await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`notices`)
 			.aggregate([
 				{

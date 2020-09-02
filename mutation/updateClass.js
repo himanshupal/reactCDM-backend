@@ -2,6 +2,7 @@ const { ForbiddenError, UserInputError } = require(`apollo-server`);
 const { MongoClient, ObjectId, Timestamp } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { _id, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -17,7 +18,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 
 		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`classes`);
+		const node = client.db(dbName).collection(`classes`);
 
 		if (data.newName)
 			throw new UserInputError(`Error in data provided ⚠`, {
@@ -34,17 +35,17 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 			const { name } = await node.findOne({ _id: ObjectId(_id) });
 
 			await client
-				.db(`RBMI`)
+				.db(dbName)
 				.collection(`notices`)
 				.updateMany({ scope: `Class`, validFor: name }, { $set: { validFor: data.name } });
 
 			await client
-				.db(`RBMI`)
+				.db(dbName)
 				.collection(`subjects`)
 				.updateMany({ class: name }, { $set: { class: data.name } });
 
 			await client
-				.db(`RBMI`)
+				.db(dbName)
 				.collection(`timetables`)
 				.updateMany({ class: name }, { $set: { class: data.name } });
 		}
@@ -53,7 +54,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 			const check = await node.findOne({ classTeacher: data.classTeacher });
 			if (check) {
 				const teacher = await client
-					.db(`RBMI`)
+					.db(dbName)
 					.collection(`teachers`)
 					.findOne({ _id: ObjectId(check.classTeacher) });
 				throw new UserInputError(`Classteacher reallocation ⚠`, {

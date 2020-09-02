@@ -2,6 +2,7 @@ const { UserInputError } = require(`apollo-server`);
 const { MongoClient } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { class: className, month, year }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -15,7 +16,7 @@ module.exports = async (_, { class: className, month, year }, { authorization })
 
 		const { class: studentOf, access, classTeacherOf } = await authenticate(authorization);
 
-		const node = client.db(`RBMI`).collection(`attendence`);
+		const node = client.db(dbName).collection(`attendence`);
 
 		if (access !== `Student` && !className && !classTeacherOf)
 			throw new UserInputError(`Insufficient data ⚠`, { error: `You must provide Class info. to get details of.` });

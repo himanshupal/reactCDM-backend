@@ -1,6 +1,7 @@
 const { MongoClient, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, __, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -16,7 +17,7 @@ module.exports = async (_, __, { authorization }) => {
 		if (access !== `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
 		const [{ friends }] = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`students`)
 			.aggregate([
 				{ $match: { _id: ObjectId(_id) } },
@@ -36,7 +37,7 @@ module.exports = async (_, __, { authorization }) => {
 			])
 			.toArray();
 
-		return friends;
+		return friends.sort((p, n) => (p.name.first.toLowerCase() < n.name.first.toLowerCase() ? -1 : 1));
 	} catch (error) {
 		return error;
 	} finally {

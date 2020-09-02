@@ -4,7 +4,7 @@ const { blake2bHex } = require(`blakejs`);
 const { hash } = require(`argon2`);
 
 const authenticate = require(`../checkAuth`);
-const { hashConfig } = require(`../config`);
+const { hashConfig, dbName } = require(`../config`);
 
 const permitted = [`Director`, `Head of Department`, `Associate Professor`];
 
@@ -21,10 +21,10 @@ module.exports = async (_, { data }, { authorization }) => {
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`students`);
+		const node = client.db(dbName).collection(`students`);
 
 		const classExist = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`classes`)
 			.findOne({ _id: ObjectId(data.class) });
 		if (!classExist)
@@ -32,7 +32,7 @@ module.exports = async (_, { data }, { authorization }) => {
 				error: `Couldn't find any class with provided details.`,
 			});
 
-		const teacher = await client.db(`RBMI`).collection(`teachers`).findOne({ username: data.username });
+		const teacher = await client.db(dbName).collection(`teachers`).findOne({ username: data.username });
 		if (teacher)
 			throw new UserInputError(`Username not available ⚠`, {
 				error: `${data.username} is already assigned to a teacher. Please choose another username.`,

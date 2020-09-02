@@ -2,6 +2,7 @@ const { UserInputError } = require(`apollo-server`);
 const { MongoClient, ObjectId, Timestamp } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { _id, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -19,10 +20,10 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 				error: `You do not have enough permission to change other's details.`,
 			});
 
-		const node = client.db(`RBMI`).collection(`students`);
+		const node = client.db(dbName).collection(`students`);
 
 		if (data.username) {
-			const teacher = await client.db(`RBMI`).collection(`teachers`).findOne({ username: data.username });
+			const teacher = await client.db(dbName).collection(`teachers`).findOne({ username: data.username });
 			if (teacher)
 				throw new UserInputError(`Username not available ⚠`, {
 					error: `${data.username} is already assigned to a teacher. Please choose another username.`,

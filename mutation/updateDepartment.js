@@ -2,6 +2,7 @@ const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, ObjectId, Timestamp } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { _id, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -13,10 +14,10 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 	try {
 		await client.connect();
 
-		const { _id: loggenInUser, access } = await authenticate(authorization);
+		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (access !== `Director`) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`departments`);
+		const node = client.db(dbName).collection(`departments`);
 
 		if (data.name) {
 			const check = await node.findOne({ name: data.name });
@@ -39,15 +40,16 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 					error: `Couldn't find the department you are trying to update. Please try again or contact admin if issue persists.`,
 				});
 
-			const { modifiedCount } = await client
-				.db(`RBMI`)
-				.collection(`teachers`)
-				.updateOne({ _id: ObjectId(previous.director) }, { $set: { designation: `Head of Department` } });
+			if (previous.director)
+				await client
+					.db(dbName)
+					.collection(`teachers`)
+					.updateOne({ _id: ObjectId(previous.director) }, { $set: { designation: `Head of Department` } });
 
-			if (!modifiedCount)
-				throw new UserInputError(`Unknown Error ⚠`, {
-					error: `Error updating department. Please try again or contact admin if issue persists.`,
-				});
+			await client
+				.db(dbName)
+				.collection(`teachers`)
+				.updateOne({ _id: ObjectId(data.director) }, { $set: { designation: `Director` } });
 		}
 
 		const { lastErrorObject, value } = await node.findOneAndUpdate(
@@ -56,7 +58,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 				$set: {
 					...data,
 					updatedAt: Timestamp.fromNumber(Date.now()),
-					updatedBy: loggenInUser,
+					updatedBy: loggedInUser,
 				},
 			},
 			{ returnOriginal: false }

@@ -1,6 +1,8 @@
 const { UserInputError } = require(`apollo-server`);
 const { MongoClient, ObjectId } = require(`mongodb`);
 
+const { dbName } = require(`../config`);
+
 module.exports = async (_, { _id }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
@@ -11,7 +13,7 @@ module.exports = async (_, { _id }) => {
 	try {
 		await client.connect();
 
-		const node = client.db(`RBMI`).collection(`notices`);
+		const node = client.db(dbName).collection(`notices`);
 
 		const [notice] = await node
 			.aggregate([

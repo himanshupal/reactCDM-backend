@@ -3,9 +3,8 @@ const { MongoClient, ObjectId } = require(`mongodb`);
 const { hash, verify } = require(`argon2`);
 const { sign } = require(`jsonwebtoken`);
 
-const { jwtConfig, hashConfig } = require(`../config`);
-
 const authenticate = require(`../checkAuth`);
+const { jwtConfig, hashConfig, dbName } = require(`../config`);
 
 module.exports = async (_, { oldPassword, newPassword }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -20,7 +19,7 @@ module.exports = async (_, { oldPassword, newPassword }, { authorization }) => {
 		const user = await authenticate(authorization);
 
 		const student = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`students`)
 			.findOne({ _id: ObjectId(user._id) });
 
@@ -31,7 +30,7 @@ module.exports = async (_, { oldPassword, newPassword }, { authorization }) => {
 				const password = await hash(newPassword, hashConfig);
 
 				const { modifiedCount } = await client
-					.db(`RBMI`)
+					.db(dbName)
 					.collection(`students`)
 					.updateOne({ _id: ObjectId(user._id) }, { $set: { password } });
 
@@ -49,7 +48,7 @@ module.exports = async (_, { oldPassword, newPassword }, { authorization }) => {
 		}
 
 		const teacher = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`teachers`)
 			.findOne({ _id: ObjectId(user._id) });
 
@@ -60,7 +59,7 @@ module.exports = async (_, { oldPassword, newPassword }, { authorization }) => {
 				const password = await hash(newPassword, hashConfig);
 
 				const { modifiedCount } = await client
-					.db(`RBMI`)
+					.db(dbName)
 					.collection(`teachers`)
 					.updateOne({ _id: ObjectId(user._id) }, { $set: { password } });
 

@@ -2,6 +2,7 @@ const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 const permitted = [`Director`, `Head of Department`, `Associate Professor`];
 
@@ -18,7 +19,7 @@ module.exports = async (_, { _id }, { authorization }) => {
 		const { access } = await authenticate(authorization);
 		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`classes`);
+		const node = client.db(dbName).collection(`classes`);
 
 		const [{ name }] = await node.find({ _id: ObjectId(_id) }, { projection: { name: true } }).toArray();
 
@@ -29,7 +30,7 @@ module.exports = async (_, { _id }, { authorization }) => {
 				error: `Error deleting class. Please try again or contact admin if issue persists.`,
 			});
 
-		const { deletedCount: deletedStudents } = await client.db(`RBMI`).collection(`students`).deleteMany({ class: _id });
+		const { deletedCount: deletedStudents } = await client.db(dbName).collection(`students`).deleteMany({ class: _id });
 
 		if (!deletedStudents)
 			throw new UserInputError(`Unknown Error ⚠`, {
@@ -37,7 +38,7 @@ module.exports = async (_, { _id }, { authorization }) => {
 			});
 
 		const { deletedCount: deletedNotes } = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`notes`)
 			.deleteMany({ scope: `Class`, class: _id });
 
@@ -47,7 +48,7 @@ module.exports = async (_, { _id }, { authorization }) => {
 			});
 
 		const { deletedCount: deletedNotices } = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`notices`)
 			.deleteMany({ scope: `Class`, validFor: name });
 
@@ -57,7 +58,7 @@ module.exports = async (_, { _id }, { authorization }) => {
 			});
 
 		const { deletedCount: deletedSubjects } = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`subjects`)
 			.deleteMany({ class: name });
 
@@ -67,7 +68,7 @@ module.exports = async (_, { _id }, { authorization }) => {
 			});
 
 		const { deletedCount: deletedTimeTable } = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`timetables`)
 			.deleteMany({ class: name });
 

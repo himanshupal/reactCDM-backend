@@ -2,6 +2,7 @@ const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, Timestamp, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { data: { scope, subject, description } }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -16,7 +17,7 @@ module.exports = async (_, { data: { scope, subject, description } }, { authoriz
 		const { _id: loggedInUser, access, class: userClass } = await authenticate(authorization);
 		if (access !== `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`notes`);
+		const node = client.db(dbName).collection(`notes`);
 
 		if (!subject && !description)
 			throw new UserInputError(`Argument Missing ⚠`, {
@@ -29,7 +30,7 @@ module.exports = async (_, { data: { scope, subject, description } }, { authoriz
 			});
 
 		const writer = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`students`)
 			.findOne({ _id: ObjectId(loggedInUser) });
 		if (scope === `Friends` && !writer.friends)

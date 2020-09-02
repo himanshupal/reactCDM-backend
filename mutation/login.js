@@ -3,7 +3,7 @@ const { MongoClient } = require(`mongodb`);
 const { verify } = require(`argon2`);
 const { sign } = require(`jsonwebtoken`);
 
-const { jwtConfig } = require(`../config`);
+const { jwtConfig, dbName } = require(`../config`);
 
 module.exports = async (_, { username, password }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -16,7 +16,7 @@ module.exports = async (_, { username, password }) => {
 		await client.connect();
 
 		const student = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`students`)
 			.findOne({ $or: [{ username }, { email: username }] });
 
@@ -25,7 +25,7 @@ module.exports = async (_, { username, password }) => {
 
 			if (verified) {
 				await client
-					.db(`RBMI`)
+					.db(dbName)
 					.collection(`students`)
 					.updateOne({ _id: student._id }, { $set: { lastLogin: Date.now() } });
 				return sign(
@@ -39,14 +39,15 @@ module.exports = async (_, { username, password }) => {
 					process.env.jwt_secret,
 					jwtConfig
 				);
-			} else
+			} else {
 				throw new UserInputError(`Incorrect Password ⚠`, {
 					error: `Please try again. Contact admin if you're locked out.`,
 				});
+			}
 		}
 
-		const teacher = await client
-			.db(`RBMI`)
+		const [teacher] = await client
+			.db(dbName)
 			.collection(`teachers`)
 			.aggregate([
 				{ $match: { $or: [{ username }, { email: username }] } },
@@ -60,14 +61,15 @@ module.exports = async (_, { username, password }) => {
 					},
 				},
 				{ $unwind: { path: `$classTeacherOf`, preserveNullAndEmptyArrays: true } },
-			]);
+			])
+			.toArray();
 
 		if (teacher) {
 			const verified = await verify(teacher.password, password);
 
 			if (verified) {
 				await client
-					.db(`RBMI`)
+					.db(dbName)
 					.collection(`teachers`)
 					.updateOne({ _id: teacher._id }, { $set: { lastLogin: Date.now() } });
 				return sign(
@@ -82,10 +84,11 @@ module.exports = async (_, { username, password }) => {
 					process.env.jwt_secret,
 					jwtConfig
 				);
-			} else
+			} else {
 				throw new UserInputError(`Incorrect Password ⚠`, {
 					error: `Please try again. Contact admin if you're locked out.`,
 				});
+			}
 		}
 
 		throw new UserInputError(`Not Found ⚠`, {

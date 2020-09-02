@@ -2,6 +2,7 @@ const { ForbiddenError } = require(`apollo-server`);
 const { MongoClient } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { page }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -17,7 +18,7 @@ module.exports = async (_, { page }, { authorization }) => {
 		if (access !== `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
 		await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`notes`)
 			.aggregate([
 				{ $addFields: { createdBy: { $toObjectId: `$createdBy` } } },

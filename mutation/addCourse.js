@@ -2,8 +2,11 @@ const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, Timestamp, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
-module.exports = async (_, { data }, { authorization }) => {
+const permitted = [`Director`, `Head of Department`];
+
+module.exports = async (_, { department, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -14,33 +17,31 @@ module.exports = async (_, { data }, { authorization }) => {
 		await client.connect();
 
 		const { _id: loggedInUser, access } = await authenticate(authorization);
-		if (access !== `Director`) throw new ForbiddenError(`Access Denied ⚠`);
+		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
-		if (
-			!data.name ||
-			!data.duration ||
-			!data.department ||
-			!data.identifier ||
-			!data.semesterBased ||
-			!data.headOfDepartment
-		)
+		if (!department)
 			throw new UserInputError(`Argument Missing ⚠`, {
-				error: `All fields are required.`,
+				error: `A Department must be provided to add Course to.`,
 			});
 
-		const node = client.db(`RBMI`).collection(`courses`);
+		if (!data.name || !data.identifier)
+			throw new UserInputError(`Argument Missing ⚠`, {
+				error: `Name & Identifier must be provided.`,
+			});
 
-		const department = await client
-			.db(`RBMI`)
+		const node = client.db(dbName).collection(`courses`);
+
+		const departmentCheck = await client
+			.db(dbName)
 			.collection(`departments`)
-			.findOne({ _id: ObjectId(data.department) });
-		if (!department)
+			.findOne({ _id: ObjectId(department) });
+		if (!departmentCheck)
 			throw new UserInputError(`Department not found ⚠`, {
 				error: `Couldn't find any department with provided details.`,
 			});
 
 		const check = await node.findOne({
-			$or: [{ name: data.name }, { identifier: data.identifier }, { headOfDepartment: data.headOfDepartment }],
+			$or: [{ name: data.name }, { identifier: data.identifier }],
 		});
 
 		if (check) {
@@ -52,24 +53,34 @@ module.exports = async (_, { data }, { authorization }) => {
 				throw new UserInputError(`Already exists ⚠`, {
 					error: `There is already a course with provided identifier.`,
 				});
-			if (check.headOfDepartment === data.headOfDepartment)
+		}
+
+		if (data.headOfDepartment) {
+			const hodCheck = await node.findOne({ headOfDepartment: data.headOfDepartment });
+			if (hodCheck)
 				throw new UserInputError(`Teacher reallocation ⚠`, {
 					error: `The teacher is already assigned as Head of another Department.`,
 				});
+
+			const { access: hodAccess } = await client
+				.db(dbName)
+				.collection(`teachers`)
+				.findOne({ _id: ObjectId(data.headOfDepartment) });
+			if (hodAccess === `Director`)
+				throw new UserInputError(`Teacher has higher Authority ⚠`, {
+					error: `The teacher you trying to assign as Head of Department is already a Director.`,
+				});
+
+			await client
+				.db(dbName)
+				.collection(`teachers`)
+				.updateOne({ _id: ObjectId(data.headOfDepartment) }, { $set: { designation: `Head of Department` } });
 		}
-
-		const { modifiedCount } = await client
-			.db(`RBMI`)
-			.collection(`teachers`)
-			.updateOne({ _id: ObjectId(data.headOfDepartment) }, { $set: { designation: `Head of Department` } });
-
-		if (!modifiedCount)
-			throw new UserInputError(`Unknown Error ⚠`, {
-				error: `Error updating course. Please try again or contact admin if issue persists.`,
-			});
 
 		const { insertedId } = await node.insertOne({
 			...data,
+			department,
+			semesterBased: data.semesterBased || false,
 			createdAt: Timestamp.fromNumber(Date.now()),
 			createdBy: loggedInUser,
 		});

@@ -4,10 +4,12 @@ exports.jwtConfig = {
 };
 
 exports.hashConfig = {
-	memoryCost: 128,
+	memoryCost: 256,
 	hashLength: 64,
 	saltLength: 32,
 	parallelism: 4,
 	timeCost: 8,
 	type: 2,
 };
+
+exports.dbName = `manager`;

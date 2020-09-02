@@ -2,6 +2,7 @@ const { ForbiddenError, UserInputError } = require(`apollo-server`);
 const { MongoClient, ObjectId, Timestamp } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 const permitted = [`Director`, `Head of Department`, `Associate Professor`];
 
@@ -18,10 +19,10 @@ module.exports = async (_, { course, data }, { authorization }) => {
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`classes`);
+		const node = client.db(dbName).collection(`classes`);
 
 		const courseCheck = await client
-			.db(`RBMI`)
+			.db(dbName)
 			.collection(`courses`)
 			.findOne({ _id: ObjectId(course) });
 		if (!courseCheck)
@@ -56,7 +57,7 @@ module.exports = async (_, { course, data }, { authorization }) => {
 						});
 						if (assigned) {
 							const teacher = await client
-								.db(`RBMI`)
+								.db(dbName)
 								.collection(`teachers`)
 								.findOne({ _id: ObjectId(assigned.classTeacher) });
 							throw new UserInputError(`Classteacher reallocation ⚠`, {

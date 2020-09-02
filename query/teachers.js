@@ -1,7 +1,8 @@
 const { ForbiddenError } = require(`apollo-server`);
-const { MongoClient } = require(`mongodb`);
+const { MongoClient, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { department }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -16,9 +17,12 @@ module.exports = async (_, { department }, { authorization }) => {
 		const { access, department: userDepartment } = await authenticate(authorization);
 		if (access === `Student` || (department && access !== `Director`)) throw new ForbiddenError(`Access Denied ⚠`);
 
+		const node = client.db(dbName).collection(`teachers`);
+		if (access === `Director` && !department) return await node.find().sort({ "name.first": 1 }).toArray();
+
 		if (department) {
 			const check = await client
-				.db(`RBMI`)
+				.db(dbName)
 				.collection(`departments`)
 				.findOne({ _id: ObjectId(department) });
 			if (!check)
@@ -27,9 +31,7 @@ module.exports = async (_, { department }, { authorization }) => {
 				});
 		}
 
-		return await client
-			.db(`RBMI`)
-			.collection(`teachers`)
+		return await node
 			.aggregate([
 				{ $match: { department: department || userDepartment } },
 				{
@@ -57,6 +59,7 @@ module.exports = async (_, { department }, { authorization }) => {
 					},
 				},
 			])
+			.sort({ "name.first": 1 })
 			.toArray();
 	} catch (error) {
 		return error;

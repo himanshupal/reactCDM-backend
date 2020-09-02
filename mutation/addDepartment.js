@@ -2,6 +2,7 @@ const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, Timestamp, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
+const { dbName } = require(`../config`);
 
 module.exports = async (_, { data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
@@ -16,37 +17,31 @@ module.exports = async (_, { data }, { authorization }) => {
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (access !== `Director`) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const node = client.db(`RBMI`).collection(`departments`);
+		const node = client.db(dbName).collection(`departments`);
 
-		if (!data.name || !data.director)
+		if (!data.name)
 			throw new UserInputError(`Argument Missing ⚠`, {
-				error: `All fields are required.`,
+				error: `Name is required for creating new department.`,
 			});
 
-		const check = await node.findOne({
-			$or: [{ name: data.name }, { director: data.director }],
-		});
+		const check = await node.findOne({ name: data.name });
+		if (check)
+			throw new UserInputError(`Already exists ⚠`, {
+				error: `There is already a department with same name.`,
+			});
 
-		if (check) {
-			if (check.name === data.name)
-				throw new UserInputError(`Already exists ⚠`, {
-					error: `There is already a department with same name.`,
-				});
-			if (check.director === data.director)
+		if (data.director) {
+			const check = await node.findOne({ director: data.director });
+			if (check)
 				throw new UserInputError(`Already exists ⚠`, {
 					error: `The teacher is already assigned as Director to another department.`,
 				});
+
+			await client
+				.db(dbName)
+				.collection(`teachers`)
+				.updateOne({ _id: ObjectId(data.director) }, { $set: { designation: `Director` } });
 		}
-
-		const { modifiedCount } = await client
-			.db(`RBMI`)
-			.collection(`teachers`)
-			.updateOne({ _id: ObjectId(data.director) }, { $set: { designation: `Director` } });
-
-		if (!modifiedCount)
-			throw new UserInputError(`Unknown Error ⚠`, {
-				error: `Error updating course. Please try again or contact admin if issue persists.`,
-			});
 
 		const { insertedId } = await node.insertOne({
 			...data,

@@ -30,39 +30,37 @@ module.exports = async (_, { course, data }, { authorization }) => {
 				error: `Couldn't find any course with provided details.`,
 			});
 
-		return await Promise.all(
+		const savedClasses = await Promise.all(
 			data.map(async (current) => {
 				try {
-					if (current.newName === undefined)
-						throw new UserInputError(`Required fields missing ⚠`, {
-							error: `You have not provided the required fields for adding class.`,
-						});
-					else {
+					if (current.newName !== undefined) {
 						const already = await node.findOne({
 							name: current.newName,
 							course,
 						});
 						if (already)
 							throw new UserInputError(`Class ${current.newName} already exists ⚠`, {
-								error: `There is already a class with ${current.newName}. If you think this is an error, try updating the class or contact Admin.`,
+								error: `There is already a class with ${current.newName}. If you think this is an error, try updating the class manually or contact Admin.`,
 							});
 
-						const assigned = await node.findOne({
-							classTeacher: current.classTeacher,
-							name: {
-								$ne: {
-									$or: [{ name: current.name, newName: current.newName }],
+						if (current.classTeacher) {
+							const assigned = await node.findOne({
+								classTeacher: current.classTeacher,
+								name: {
+									$ne: {
+										$or: [current.name, current.newName],
+									},
 								},
-							},
-						});
-						if (assigned) {
-							const teacher = await client
-								.db(dbName)
-								.collection(`teachers`)
-								.findOne({ _id: ObjectId(assigned.classTeacher) });
-							throw new UserInputError(`Classteacher reallocation ⚠`, {
-								error: `${teacher.name.first} ${teacher.name.last} is already assigned as classteacher for ${assigned.name}.`,
 							});
+							if (assigned) {
+								const teacher = await client
+									.db(dbName)
+									.collection(`teachers`)
+									.findOne({ _id: ObjectId(assigned.classTeacher) });
+								throw new UserInputError(`Classteacher reallocation ⚠`, {
+									error: `${teacher.name.first} ${teacher.name.last} is already assigned as classteacher for ${assigned.name}.`,
+								});
+							}
 						}
 
 						const previous = await node.findOne({ name: current.name, course });
@@ -74,9 +72,9 @@ module.exports = async (_, { course, data }, { authorization }) => {
 							{ name: current.name, course },
 							{
 								$set: {
-									name,
-									course,
 									...current,
+									course,
+									name,
 									previousData: previous
 										? [
 												...previous.previousData,
@@ -147,6 +145,8 @@ module.exports = async (_, { course, data }, { authorization }) => {
 				}
 			})
 		);
+
+		return savedClasses.filter((x) => x);
 	} catch (error) {
 		return error;
 	} finally {

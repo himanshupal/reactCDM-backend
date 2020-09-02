@@ -19,15 +19,6 @@ module.exports = async (_, { department: queryDpt }, { authorization }) => {
 
 		if (access !== `Director` && queryDpt) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const check = await client
-			.db(dbName)
-			.collection(`departments`)
-			.findOne({ _id: ObjectId(queryDpt) });
-		if (!check)
-			throw new UserInputError(`Not Found ⚠`, {
-				error: `Couldn't find the department you've provided details for.`,
-			});
-
 		return await client
 			.db(dbName)
 			.collection(`courses`)

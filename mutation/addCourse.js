@@ -24,9 +24,9 @@ module.exports = async (_, { department, data }, { authorization }) => {
 				error: `A Department must be provided to add Course to.`,
 			});
 
-		if (!data.name || !data.identifier)
-			throw new UserInputError(`Argument Missing ⚠`, {
-				error: `Name & Identifier must be provided.`,
+		if (!data.name || !data.identifier || !data.duration)
+			throw new UserInputError(`Argument(s) Missing ⚠`, {
+				error: `Name, Identifier & Duration must be provided.`,
 			});
 
 		const node = client.db(dbName).collection(`courses`);

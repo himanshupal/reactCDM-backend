@@ -178,6 +178,7 @@ module.exports = gql`
 
 	input SubjectInput {
 		name: String
+		language: String
 		subjectCode: String
 		uniSubjectCode: String
 		teacher: ID
@@ -185,6 +186,7 @@ module.exports = gql`
 	type Subject {
 		_id: ID
 		name: String
+		language: String
 		subjectCode: String
 		uniSubjectCode: String
 		teacher: Teacher
@@ -208,7 +210,6 @@ module.exports = gql`
 		sessionStart: String
 		sessionEnd: String
 		totalStudents: Int
-		subjects: [Subject]!
 		classTeacher: Teacher
 
 		createdAt: Float
@@ -292,6 +293,8 @@ module.exports = gql`
 
 		classes(course: ID!): [Class]!
 
+		subjects(class: String!): [Subject]!
+
 		timeTable(class: String!): TimeTable!
 
 		attendence(class: ID, month: Int, year: Int): [Attendence]!
@@ -311,7 +314,7 @@ module.exports = gql`
 		addTimeTable(class: String!, data: [TimeTableInput]!): TimeTable!
 		updateTimeTable(_id: ID!, data: [TimeTableInput]!): TimeTable!
 
-		addSubject(class: String!, data: [SubjectInput]!): [Subject]!
+		addSubjects(class: String!, data: [SubjectInput]!): [Subject]!
 		updateSubject(_id: ID!, data: SubjectInput!): Subject!
 		deleteSubject(_id: ID!): Boolean!
 

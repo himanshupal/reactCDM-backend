@@ -6,7 +6,7 @@ const { dbName } = require(`../config`);
 
 const permitted = [`Director`, `Head of Department`, `Associate Professor`];
 
-module.exports = async (_, { class: name, data }, { authorization }) => {
+module.exports = async (_, { class: className, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -21,20 +21,16 @@ module.exports = async (_, { class: name, data }, { authorization }) => {
 
 		const node = client.db(dbName).collection(`subjects`);
 
-		const check = await client.db(dbName).collection(`classes`).findOne({ name });
+		const check = await client.db(dbName).collection(`classes`).findOne({ name: className });
 		if (!check)
 			throw new UserInputError(`Class not found ⚠`, {
 				error: `Couldn't find any class with provided details.`,
 			});
 
-		return await Promise.all(
+		const savedSubjects = await Promise.all(
 			data.map(async (current) => {
 				try {
-					if (current.subjectCode === undefined || current.name === undefined)
-						throw new UserInputError(`Required fields missing ⚠`, {
-							error: `You have not provided the required fields for adding subject.`,
-						});
-					else {
+					if (current.subjectCode !== undefined && current.name !== undefined) {
 						const check = await node.findOne({
 							subjectCode: current.subjectCode,
 						});
@@ -44,13 +40,14 @@ module.exports = async (_, { class: name, data }, { authorization }) => {
 							});
 
 						const { insertedId } = await node.insertOne({
-							class: name,
 							...current,
+							class: className,
+							language: current.language || `English`,
 							createdAt: Timestamp.fromNumber(Date.now()),
 							createdBy: loggedInUser,
 						});
 
-						const [subjects] = await node
+						const [subject] = await node
 							.aggregate([
 								{ $match: { _id: insertedId } },
 								{
@@ -80,13 +77,15 @@ module.exports = async (_, { class: name, data }, { authorization }) => {
 							])
 							.toArray();
 
-						return subjects;
+						return subject;
 					}
 				} catch (error) {
 					throw error;
 				}
 			})
 		);
+
+		return savedSubjects.filter((x) => x);
 	} catch (error) {
 		return error;
 	} finally {

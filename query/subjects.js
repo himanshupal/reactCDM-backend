@@ -1,10 +1,10 @@
-const { UserInputError, ForbiddenError } = require(`apollo-server`);
-const { MongoClient, ObjectId } = require(`mongodb`);
+const { ForbiddenError, UserInputError } = require(`apollo-server`);
+const { MongoClient } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);
 const { dbName } = require(`../config`);
 
-module.exports = async (_, { course }, { authorization }) => {
+module.exports = async (_, { class: className }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -17,37 +17,33 @@ module.exports = async (_, { course }, { authorization }) => {
 		const { access } = await authenticate(authorization);
 		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
-		const check = await client
-			.db(dbName)
-			.collection(`courses`)
-			.findOne({ _id: ObjectId(course) });
+		const check = await client.db(dbName).collection(`classes`).findOne({ name: className });
 		if (!check)
-			throw new UserInputError(`Not Found ⚠`, {
-				error: `Couldn't find the course you've provided details for.`,
+			throw new UserInputError(`Class Not Found ⚠`, {
+				error: `No Class was found with provided details.`,
 			});
 
-		return await client
+		return client
 			.db(dbName)
-			.collection(`classes`)
+			.collection(`subjects`)
 			.aggregate([
-				{ $match: { course } },
+				{ $match: { class: className } },
 				{
 					$addFields: {
-						_id: { $toString: `$_id` },
+						teacher: { $toObjectId: `$teacher` },
 						createdBy: { $toObjectId: `$createdBy` },
 						updatedBy: { $toObjectId: `$updatedBy` },
-						classTeacher: { $toObjectId: `$classTeacher` },
 					},
 				},
 				{
 					$lookup: {
 						from: `teachers`,
-						localField: `classTeacher`,
+						localField: `teacher`,
 						foreignField: `_id`,
-						as: `classTeacher`,
+						as: `teacher`,
 					},
 				},
-				{ $unwind: { path: `$classTeacher`, preserveNullAndEmptyArrays: true } },
+				{ $unwind: { path: `$teacher`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,
@@ -66,21 +62,11 @@ module.exports = async (_, { course }, { authorization }) => {
 					},
 				},
 				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
-				{
-					$lookup: {
-						from: `students`,
-						localField: `_id`,
-						foreignField: `class`,
-						as: `totalStudents`,
-					},
-				},
-				{ $addFields: { totalStudents: { $size: `$totalStudents` } } },
 			])
-			.sort({ name: 1 })
 			.toArray();
 	} catch (error) {
 		return error;
 	} finally {
-		await client.close();
+		client.close();
 	}
 };

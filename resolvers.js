@@ -12,6 +12,8 @@ module.exports = {
 
 		classes: require(`./query/classes`),
 
+		subjects: require(`./query/subjects`),
+
 		attendence: require(`./query/attendence`),
 
 		timeTable: require(`./query/timeTable`),
@@ -23,6 +25,7 @@ module.exports = {
 		notices: require(`./query/notices`),
 		notice: require(`./query/notice`),
 	},
+
 	Mutation: {
 		addDepartment: require(`./mutation/addDepartment`),
 		updateDepartment: require(`./mutation/updateDepartment`),
@@ -43,8 +46,8 @@ module.exports = {
 		updateClass: require(`./mutation/updateClass`),
 		deleteClass: require(`./mutation/deleteClass`),
 
+		addSubjects: require(`./mutation/addSubjects`),
 		updateSubject: require(`./mutation/updateSubject`),
-		addSubject: require(`./mutation/addSubject`),
 		deleteSubject: require(`./mutation/deleteSubject`),
 
 		addTimeTable: require(`./mutation/addTimeTable`),

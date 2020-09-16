@@ -1,5 +1,6 @@
 const { UserInputError, ForbiddenError } = require(`apollo-server`);
-const { MongoClient, Timestamp } = require(`mongodb`);
+const { MongoClient, Timestamp, ObjectId } = require(`mongodb`);
+const { clearObject } = require(`clear-object`);
 const { blake2bHex } = require(`blakejs`);
 const { hash } = require(`argon2`);
 
@@ -17,6 +18,8 @@ module.exports = async (_, { data }, { authorization }) => {
 
 	try {
 		await client.connect();
+
+		clearObject(data);
 
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (!permitted.includes(access)) throw new ForbiddenError(`Access Denied ⚠`);
@@ -56,6 +59,7 @@ module.exports = async (_, { data }, { authorization }) => {
 		const [newStudent] = await node
 			.aggregate([
 				{ $match: { _id: insertedId } },
+				{ $addFields: { createdBy: { $toObjectId: `$createdBy` } } },
 				{
 					$lookup: {
 						from: `teachers`,

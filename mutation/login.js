@@ -1,5 +1,5 @@
 const { UserInputError } = require(`apollo-server`);
-const { MongoClient } = require(`mongodb`);
+const { MongoClient, ObjectId, Timestamp } = require(`mongodb`);
 const { verify } = require(`argon2`);
 const { sign } = require(`jsonwebtoken`);
 
@@ -27,11 +27,11 @@ module.exports = async (_, { username, password }) => {
 				await client
 					.db(dbName)
 					.collection(`students`)
-					.updateOne({ _id: student._id }, { $set: { lastLogin: Date.now() } });
+					.updateOne({ _id: ObjectId(student._id) }, { $set: { lastLogin: Timestamp.fromNumber(Date.now()) } });
 				return sign(
 					{
 						lastLogin: student.lastLogin,
-						_id: student._id.toString(),
+						_id: student._id,
 						username: student.username,
 						class: student.class,
 						access: `Student`,
@@ -71,10 +71,10 @@ module.exports = async (_, { username, password }) => {
 				await client
 					.db(dbName)
 					.collection(`teachers`)
-					.updateOne({ _id: teacher._id }, { $set: { lastLogin: Date.now() } });
+					.updateOne({ _id: ObjectId(teacher._id) }, { $set: { lastLogin: Timestamp.fromNumber(Date.now()) } });
 				return sign(
 					{
-						_id: teacher._id.toString(),
+						_id: teacher._id,
 						username: teacher.username,
 						department: teacher.department,
 						access: teacher.designation,

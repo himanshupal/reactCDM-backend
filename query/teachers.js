@@ -58,6 +58,28 @@ module.exports = async (_, { department }, { authorization }) => {
 						as: `teaches`,
 					},
 				},
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `createdBy`,
+						foreignField: `_id`,
+						as: `createdBy`,
+					},
+				},
+				{
+					$unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true },
+				},
+				{
+					$lookup: {
+						from: `teachers`,
+						localField: `updatedBy`,
+						foreignField: `_id`,
+						as: `updatedBy`,
+					},
+				},
+				{
+					$unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true },
+				},
 			])
 			.sort({ "name.first": 1 })
 			.toArray();

@@ -60,7 +60,6 @@ module.exports = gql`
 		email: String
 		aadharNumber: String
 		contactNumber: String
-		dateOfLeaving: String
 	}
 	type Student {
 		_id: ID
@@ -74,7 +73,6 @@ module.exports = gql`
 		bloodGroup: String
 		gender: String
 		caste: String
-		class: Class
 		religion: String
 		dateOfBirth: String
 		address: Address
@@ -82,8 +80,6 @@ module.exports = gql`
 		email: String
 		aadharNumber: String
 		contactNumber: String
-		admissionDate: String
-		dateOfLeaving: String
 
 		createdAt: Float
 		createdBy: Teacher
@@ -95,7 +91,6 @@ module.exports = gql`
 		username: String
 		designation: String
 		registrationNumber: String
-		department: ID
 		name: NameInput
 		bloodGroup: String
 		gender: String
@@ -116,7 +111,6 @@ module.exports = gql`
 		username: String
 		designation: String
 		registrationNumber: String
-		department: Department
 		name: Name
 		bloodGroup: String
 		gender: String
@@ -186,6 +180,7 @@ module.exports = gql`
 	type Subject {
 		_id: ID
 		name: String
+		class: String
 		language: String
 		subjectCode: String
 		uniSubjectCode: String
@@ -329,7 +324,7 @@ module.exports = gql`
 		updateCourse(_id: ID!, data: CourseInput!): Course!
 		deleteCourse(_id: ID!, classes: Boolean): Boolean!
 
-		addTeacher(data: TeacherInput!): Teacher!
+		addTeacher(department: ID!, data: TeacherInput!): Teacher!
 		updateTeacher(_id: ID!, data: TeacherInput!): Teacher!
 		deleteTeacher(_id: ID!): Boolean!
 

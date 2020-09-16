@@ -1,6 +1,9 @@
 const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, ObjectId, Timestamp } = require(`mongodb`);
 
+const { clearObject } = require(`clear-object`);
+const { flatten } = require(`flat`);
+
 const authenticate = require(`../checkAuth`);
 const { dbName } = require(`../config`);
 
@@ -13,6 +16,9 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 
 	try {
 		await client.connect();
+
+		clearObject(data);
+		data = flatten(data);
 
 		const { _id: loggedInUser, access } = await authenticate(authorization);
 		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);

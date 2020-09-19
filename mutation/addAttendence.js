@@ -14,70 +14,37 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 	try {
 		await client.connect();
 
-		const { _id: loggedInUser, access } = await authenticate(authorization);
+		const { _id: loggedInUser, access, classTeacherOf } = await authenticate(authorization);
 		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
+
+		if (!className && !classTeacherOf)
+			throw new UserInputError(`Insufficient data ⚠`, { error: `You must provide Class info. to save attendence to.` });
 
 		const node = client.db(dbName).collection(`attendence`);
 
-		if (data.holiday && data.students)
-			throw new UserInputError(`It's holiday ⚠`, {
-				error: `Cannot add students on holiday.`,
-			});
+		const day = new Date().toLocaleDateString();
 
-		const check = await node.findOne({ day: data.day, class: data.class });
+		const check = await node.findOne({ day, class: className || classTeacherOf });
 		if (check)
 			throw new UserInputError(`Already saved ⚠`, {
-				error: `Attendence already taken at ${new Date(check.createdAt)
-					.toLocaleTimeString(`en-in`, {
-						weekday: `short`,
-						year: `numeric`,
-						month: `long`,
-						day: `numeric`,
-					})
-					.replace(/,/g, ``)}. You can edit it though.`,
+				error: `Attendence already taken at ${new Date(Number(check.createdAt)).toDateString()} ${new Date(
+					Number(check.createdAt)
+				).toLocaleTimeString()}`,
 			});
 
-		const [year, month, date] = data.day.split(`-`);
+		const [date, month, year] = day.split(/\//);
 
-		const { insertedId } = await node.insertOne({
-			class: className,
+		const { insertedCount } = await node.insertOne({
 			...data,
+			day,
+			class: className || classTeacherOf,
 			idx: { date: Number(date), month: Number(month) - 1, year: Number(year) },
 			totalStudents: data.students ? data.students.length : 0,
-			createdAt: Timestamp.fromNumber(Date.now()),
-			createdBy: loggedInUser,
+			updatedAt: Timestamp.fromNumber(Date.now()),
+			updatedBy: loggedInUser,
 		});
 
-		const [attendence] = await node
-			.aggregate([
-				{ $match: { _id: insertedId } },
-				{
-					$addFields: {
-						students: { $toObjectId: `$students` },
-						createdBy: { $toObjectId: `$createdBy` },
-					},
-				},
-				{
-					$lookup: {
-						from: `students`,
-						localField: `students`,
-						foreignField: `_id`,
-						as: `students`,
-					},
-				},
-				{
-					$lookup: {
-						from: `teachers`,
-						localField: `createdBy`,
-						foreignField: `_id`,
-						as: `createdBy`,
-					},
-				},
-				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
-			])
-			.toArray();
-
-		return attendence;
+		return insertedCount > 0 ? `Attendence Saved` : `Server Side Error !`;
 	} catch (error) {
 		return error;
 	} finally {

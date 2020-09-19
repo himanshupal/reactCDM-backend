@@ -32,7 +32,7 @@ module.exports = async (_, { class: className, month, year }, { authorization })
 				},
 				{
 					$addFields: {
-						createdBy: { $toObjectId: `$createdBy` },
+						updatedBy: { $toObjectId: `$updatedBy` },
 						students: { $map: { input: `$students`, as: `student`, in: { $toObjectId: `$$student` } } },
 					},
 				},
@@ -47,12 +47,12 @@ module.exports = async (_, { class: className, month, year }, { authorization })
 				{
 					$lookup: {
 						from: `teachers`,
-						localField: `createdBy`,
+						localField: `updatedBy`,
 						foreignField: `_id`,
-						as: `createdBy`,
+						as: `updatedBy`,
 					},
 				},
-				{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
+				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
 			.toArray();
 	} catch (error) {

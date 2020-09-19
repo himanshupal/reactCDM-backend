@@ -146,8 +146,8 @@ module.exports = gql`
 		totalStudents: Int
 		students: [Student]
 
-		createdAt: Float
-		createdBy: Teacher
+		updatedAt: Float
+		updatedBy: Teacher
 	}
 
 	input PageInput {
@@ -303,8 +303,8 @@ module.exports = gql`
 	}
 
 	type Mutation {
-		addAttendence(class: ID, data: AttendenceInput!): Attendence!
-		attendenceMonth(class: ID!, data: [AttendenceInput]!): [Attendence]!
+		addAttendence(class: ID, data: AttendenceInput!): String!
+		attendenceMonth(class: ID, data: [AttendenceInput]!): [Attendence]!
 
 		addTimeTable(class: String!, data: [TimeTableInput]!): TimeTable!
 		updateTimeTable(_id: ID!, data: [TimeTableInput]!): TimeTable!

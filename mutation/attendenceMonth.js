@@ -1,6 +1,8 @@
 const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, Timestamp } = require(`mongodb`);
 
+const { clearObject } = require(`clear-object`);
+
 const authenticate = require(`../checkAuth`);
 const { dbName } = require(`../config`);
 
@@ -14,8 +16,13 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 	try {
 		await client.connect();
 
-		const { _id: loggedInuser, access } = await authenticate(authorization);
+		const { _id: loggedInuser, access, classTeacherOf } = await authenticate(authorization);
 		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
+
+		if (!className && !classTeacherOf)
+			throw new UserInputError(`Insufficient data ⚠`, { error: `You must provide Class info. to save attendence to.` });
+
+		clearObject(data);
 
 		const node = client.db(dbName).collection(`attendence`);
 
@@ -23,19 +30,19 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 			data.map(async (current) => {
 				try {
 					if (current.day !== undefined) {
-						const [year, month, date] = current.day.split(`-`);
+						const [date, month, year] = current.day.split(/\//);
 
 						const { lastErrorObject, value } = await node.findOneAndUpdate(
 							{ day: current.day },
 							{
 								$set: {
-									class: className,
+									class: className || classTeacherOf,
 									holiday: current.holiday,
 									students: current.students,
 									idx: { date: Number(date), month: Number(month) - 1, year: Number(year) },
 									totalStudents: current.students ? current.students.length : 0,
-									createdAt: Timestamp.fromNumber(Date.now()),
-									createdBy: loggedInuser,
+									updatedAt: Timestamp.fromNumber(Date.now()),
+									updatedBy: loggedInuser,
 								},
 							},
 							{ upsert: true, returnOriginal: false }
@@ -51,8 +58,8 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 								{ $match: { _id: value._id } },
 								{
 									$addFields: {
-										students: { $toObjectId: `$students` },
-										createdBy: { $toObjectId: `$createdBy` },
+										updatedBy: { $toObjectId: `$updatedBy` },
+										students: { $map: { input: `$students`, as: `student`, in: { $toObjectId: `$$student` } } },
 									},
 								},
 								{
@@ -66,12 +73,12 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 								{
 									$lookup: {
 										from: `teachers`,
-										localField: `createdBy`,
+										localField: `updatedBy`,
 										foreignField: `_id`,
-										as: `createdBy`,
+										as: `updatedBy`,
 									},
 								},
-								{ $unwind: { path: `$createdBy`, preserveNullAndEmptyArrays: true } },
+								{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 							])
 							.toArray();
 

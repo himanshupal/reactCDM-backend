@@ -1,4 +1,4 @@
-const { UserInputError } = require(`apollo-server`);
+const { UserInputError, ForbiddenError } = require(`apollo-server`);
 const { MongoClient, ObjectId } = require(`mongodb`);
 
 const authenticate = require(`../checkAuth`);

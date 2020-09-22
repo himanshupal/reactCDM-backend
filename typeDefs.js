@@ -68,6 +68,7 @@ module.exports = gql`
 		registrationNumber: String
 		enrollmentNumber: String
 		name: Name
+		class: Class
 		father: Parent
 		mother: Parent
 		bloodGroup: String
@@ -296,9 +297,9 @@ module.exports = gql`
 
 		friends: [Student]!
 
-		notes(page: Int!): [Page]!
+		notes: [Page]!
 
-		notices(page: Int!): [Page]!
+		notices: [Page]!
 		notice(_id: ID!): Page!
 	}
 

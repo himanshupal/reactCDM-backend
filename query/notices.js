@@ -2,7 +2,7 @@ const { MongoClient } = require(`mongodb`);
 
 const { dbName } = require(`../config`);
 
-module.exports = async (_, { page }) => {
+module.exports = async () => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -41,8 +41,6 @@ module.exports = async (_, { page }) => {
 				},
 				{ $unwind: { path: `$updatedBy`, preserveNullAndEmptyArrays: true } },
 			])
-			.skip(5 * (page - 1))
-			.limit(5)
 			.toArray();
 	} catch (error) {
 		return error;

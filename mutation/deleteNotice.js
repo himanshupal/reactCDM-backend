@@ -17,7 +17,7 @@ module.exports = async (_, { _id }, { authorization }) => {
 		await client.connect();
 
 		const { _id: loggedInUser, access } = await authenticate(authorization);
-		if (access !== `Student`) throw new ForbiddenError(`Access Denied ⚠`);
+		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
 		const node = client.db(dbName).collection(`notices`);
 		const teacherNode = client.db(dbName).collection(`teachers`);

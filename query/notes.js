@@ -4,7 +4,7 @@ const { MongoClient } = require(`mongodb`);
 const authenticate = require(`../checkAuth`);
 const { dbName } = require(`../config`);
 
-module.exports = async (_, { page }, { authorization }) => {
+module.exports = async (_, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -41,8 +41,6 @@ module.exports = async (_, { page }, { authorization }) => {
 					},
 				},
 			])
-			.skip(5 * (page - 1))
-			.limit(5)
 			.toArray();
 	} catch (error) {
 		return error;

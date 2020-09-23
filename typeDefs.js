@@ -91,6 +91,7 @@ module.exports = gql`
 	input TeacherInput {
 		username: String
 		designation: String
+		department: ID
 		registrationNumber: String
 		name: NameInput
 		bloodGroup: String
@@ -113,6 +114,7 @@ module.exports = gql`
 		designation: String
 		registrationNumber: String
 		name: Name
+		department: ID
 		bloodGroup: String
 		gender: String
 		caste: String

@@ -9,7 +9,7 @@ const { hashConfig, dbName } = require(`../config`);
 
 const permitted = [`Director`, `Head of Department`];
 
-module.exports = async (_, { data }, { authorization }) => {
+module.exports = async (_, { department, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {
 		keepAlive: false,
 		useNewUrlParser: true,
@@ -26,11 +26,11 @@ module.exports = async (_, { data }, { authorization }) => {
 
 		const node = client.db(dbName).collection(`teachers`);
 
-		const department = await client
+		const dpt = await client
 			.db(dbName)
 			.collection(`departments`)
-			.findOne({ _id: ObjectId(data.department) });
-		if (!department)
+			.findOne({ _id: ObjectId(department) });
+		if (!dpt)
 			throw new UserInputError(`Department not found ⚠`, {
 				error: `Couldn't find any department with provided details.`,
 			});
@@ -52,6 +52,7 @@ module.exports = async (_, { data }, { authorization }) => {
 		const { insertedId } = await node.insertOne({
 			...data,
 			password,
+			department,
 			createdAt: Timestamp.fromNumber(Date.now()),
 			createdBy: loggedInUser,
 		});
@@ -61,19 +62,9 @@ module.exports = async (_, { data }, { authorization }) => {
 				{ $match: { _id: insertedId } },
 				{
 					$addFields: {
-						department: { $toObjectId: `$department` },
 						createdBy: { $toObjectId: `$createdBy` },
 					},
 				},
-				{
-					$lookup: {
-						from: `departments`,
-						localField: `department`,
-						foreignField: `_id`,
-						as: `department`,
-					},
-				},
-				{ $unwind: { path: `$department`, preserveNullAndEmptyArrays: true } },
 				{
 					$lookup: {
 						from: `teachers`,

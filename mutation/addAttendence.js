@@ -27,8 +27,8 @@ module.exports = async (_, { class: className, data }, { authorization }) => {
 		const check = await node.findOne({ day, class: className || classTeacherOf });
 		if (check)
 			throw new UserInputError(`Already saved ⚠`, {
-				error: `Attendence already taken at ${new Date(Number(check.createdAt)).toDateString()} ${new Date(
-					Number(check.createdAt)
+				error: `Attendence already taken at ${new Date(Number(check.updatedAt)).toDateString()} ${new Date(
+					Number(check.updatedAt)
 				).toLocaleTimeString()}`,
 			});
 

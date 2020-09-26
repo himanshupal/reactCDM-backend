@@ -17,7 +17,7 @@ module.exports = async (_, { username }, { authorization }) => {
 		const { username: loggedInUser, access } = await authenticate(authorization);
 		if (access === `Student`) throw new ForbiddenError(`Access Denied ⚠`);
 
-		if (username && username !== loggedInUser && (access === `Associate Professor` || access === `Assistant Professor`))
+		if (username && username !== loggedInUser && (access === `Associate Professor` || access === `Professor`))
 			throw new UserInputError(`Not Allowed ⚠`, {
 				error: `You do not have enough permission to view other teacher's specific details.`,
 			});

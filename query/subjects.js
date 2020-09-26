@@ -23,7 +23,7 @@ module.exports = async (_, { class: className }, { authorization }) => {
 				error: `No Class was found with provided details.`,
 			});
 
-		return client
+		return await client
 			.db(dbName)
 			.collection(`subjects`)
 			.aggregate([
@@ -67,6 +67,6 @@ module.exports = async (_, { class: className }, { authorization }) => {
 	} catch (error) {
 		return error;
 	} finally {
-		client.close();
+		await client.close();
 	}
 };

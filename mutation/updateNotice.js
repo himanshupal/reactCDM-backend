@@ -4,7 +4,7 @@ const { MongoClient, Timestamp, ObjectId } = require(`mongodb`);
 const authenticate = require(`../checkAuth`);
 const { dbName } = require(`../config`);
 
-const permitted = [`Assistant Professor`, `Associate Professor`, `Head of Department`, `Director`];
+const permitted = [`Professor`, `Associate Professor`, `Head of Department`, `Director`];
 
 module.exports = async (_, { _id, data }, { authorization }) => {
 	const client = new MongoClient(process.env.mongo_link, {

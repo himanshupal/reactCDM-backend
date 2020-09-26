@@ -25,7 +25,7 @@ module.exports = async (_, { _id, data }, { authorization }) => {
 
 		const node = client.db(dbName).collection(`teachers`);
 
-		if (_id !== loggedInUser && (access === `Associate Professor` || access === `Assistant Professor`))
+		if (_id !== loggedInUser && (access === `Associate Professor` || access === `Professor`))
 			throw new UserInputError(`Not Allowed ⚠`, {
 				error: `You do not have enough permission to change other teacher's details.`,
 			});

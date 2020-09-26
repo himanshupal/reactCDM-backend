@@ -1,37 +1,72 @@
-const query = `./resolvers/query/`;
-const mutation = `./resolvers/mutation/`;
-
 module.exports = {
 	Query: {
-		attendenceMonth: require(query + `getFullMonthAttendence`),
-		departments: require(query + `getDepartments`),
-		attendence: require(query + `getAttendence`),
-		timeTable: require(query + `timeTable`),
-		teachers: require(query + `getTeacher`),
-		students: require(query + `getStudent`),
-		subjects: require(query + `subjects`),
-		classes: require(query + `classes`),
-		class: require(query + `getClass`),
-		notes: require(query + `notes`),
+		departments: require(`./query/departments`),
+
+		courses: require(`./query/courses`),
+
+		teachers: require(`./query/teachers`),
+		teacher: require(`./query/teacher`),
+
+		students: require(`./query/students`),
+		student: require(`./query/student`),
+
+		classes: require(`./query/classes`),
+
+		subjects: require(`./query/subjects`),
+
+		attendence: require(`./query/attendence`),
+
+		timeTable: require(`./query/timeTable`),
+
+		friends: require(`./query/friends`),
+
+		notes: require(`./query/notes`),
+
+		notices: require(`./query/notices`),
+		notice: require(`./query/notice`),
 	},
+
 	Mutation: {
-		addAttendenceMany: require(mutation + `addAttendenceMany`),
-		updateAttendence: require(mutation + `updateAttendence`),
-		updateDepartment: require(mutation + `updateDepartment`),
-		createTimeTable: require(mutation + `createTimeTable`),
-		changePassword: require(mutation + `changePassword`),
-		addAttendence: require(mutation + `addAttendence`),
-		updateStudent: require(mutation + `updateStudent`),
-		updateTeacher: require(mutation + `updateTeacher`),
-		updateSubject: require(mutation + `updateSubject`),
-		updateCourse: require(mutation + `updateCourse`),
-		updateClass: require(mutation + `updateClass`),
-		newSession: require(mutation + `newSession`),
-		addTeacher: require(mutation + `addTeacher`),
-		addStudent: require(mutation + `addStudent`),
-		addSubject: require(mutation + `addSubject`),
-		addCourse: require(mutation + `addCourse`),
-		createNote: require(mutation + `addNote`),
-		login: require(mutation + `login`),
+		addDepartment: require(`./mutation/addDepartment`),
+		updateDepartment: require(`./mutation/updateDepartment`),
+
+		addCourse: require(`./mutation/addCourse`),
+		updateCourse: require(`./mutation/updateCourse`),
+		deleteCourse: require(`./mutation/deleteCourse`),
+
+		addTeacher: require(`./mutation/addTeacher`),
+		updateTeacher: require(`./mutation/updateTeacher`),
+		deleteTeacher: require(`./mutation/deleteTeacher`),
+
+		addStudent: require(`./mutation/addStudent`),
+		updateStudent: require(`./mutation/updateStudent`),
+		deleteStudent: require(`./mutation/deleteStudent`),
+
+		newSession: require(`./mutation/newSession`),
+		updateClass: require(`./mutation/updateClass`),
+		deleteClass: require(`./mutation/deleteClass`),
+
+		addSubjects: require(`./mutation/addSubjects`),
+		updateSubject: require(`./mutation/updateSubject`),
+		deleteSubject: require(`./mutation/deleteSubject`),
+
+		addTimeTable: require(`./mutation/addTimeTable`),
+		updateTimeTable: require(`./mutation/updateTimeTable`),
+
+		addAttendence: require(`./mutation/addAttendence`),
+		attendenceMonth: require(`./mutation/attendenceMonth`),
+
+		addFriends: require(`./mutation/addFriends`),
+
+		addNote: require(`./mutation/addNote`),
+		updateNote: require(`./mutation/updateNote`),
+		deleteNote: require(`./mutation/deleteNote`),
+
+		addNotice: require(`./mutation/addNotice`),
+		updateNotice: require(`./mutation/updateNotice`),
+		deleteNotice: require(`./mutation/deleteNotice`),
+
+		changePassword: require(`./mutation/changePassword`),
+		login: require(`./mutation/login`),
 	},
 };

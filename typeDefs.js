@@ -1,17 +1,17 @@
 const { gql } = require(`apollo-server`);
 
 module.exports = gql`
-	input NameInputObject {
+	input NameInput {
 		first: String
 		last: String
 	}
-	input ParentInputObject {
+	input ParentInput {
 		name: String
 		occupation: String
 		annualSalary: String
 		contactNumber: String
 	}
-	input AddressInputObject {
+	input AddressInput {
 		current: AddressInputDefinition
 		permanent: AddressInputDefinition
 	}
@@ -20,27 +20,7 @@ module.exports = gql`
 		district: String
 		tehsil: String
 	}
-	input StudentInput {
-		username: String
-		rollNumber: String
-		registrationNumber: String
-		enrollmentNumber: String
-		name: NameInputObject
-		father: ParentInputObject
-		mother: ParentInputObject
-		bloodGroup: String
-		gender: String
-		caste: String
-		class: String
-		religion: String
-		dateOfBirth: String
-		address: AddressInputObject
-		aadharNumber: String
-		photo: String
-		email: String
-		contactNumber: String
-		dateOfLeaving: String
-	}
+
 	type Name {
 		first: String
 		last: String
@@ -60,6 +40,27 @@ module.exports = gql`
 		district: String
 		tehsil: String
 	}
+
+	input StudentInput {
+		username: String
+		rollNumber: String
+		registrationNumber: String
+		enrollmentNumber: String
+		name: NameInput
+		father: ParentInput
+		mother: ParentInput
+		bloodGroup: String
+		gender: String
+		caste: String
+		class: ID
+		religion: String
+		dateOfBirth: String
+		address: AddressInput
+		photo: String
+		email: String
+		aadharNumber: String
+		contactNumber: String
+	}
 	type Student {
 		_id: ID
 		username: String
@@ -67,58 +68,41 @@ module.exports = gql`
 		registrationNumber: String
 		enrollmentNumber: String
 		name: Name
+		class: Class
 		father: Parent
 		mother: Parent
 		bloodGroup: String
 		gender: String
 		caste: String
-		class: Class
 		religion: String
 		dateOfBirth: String
 		address: Address
 		photo: String
 		email: String
-		attendence: [Attendence]
 		aadharNumber: String
 		contactNumber: String
-		dateOfLeaving: String
+
 		createdAt: Float
+		createdBy: Teacher
 		updatedAt: Float
-	}
-	input AttendenceInput {
-		day: String
-		class: String
-		holiday: String
-		students: [String]
-	}
-	type Attendence {
-		_id: ID
-		day: String
-		holiday: String
-		totalStudents: Int
-		students: [String]
-		createdAt: Float
-		createdBy: ID
-		updatedAt: Float
-		updatedBy: ID
+		updatedBy: Teacher
 	}
 
 	input TeacherInput {
-		name: NameInputObject
-		bloodGroup: String
 		username: String
+		designation: String
+		registrationNumber: String
+		name: NameInput
+		bloodGroup: String
+		gender: String
 		caste: String
+		religion: String
+		dateOfBirth: String
+		address: AddressInput
+		aadharNumber: String
 		photo: String
 		email: String
-		gender: String
-		religion: String
-		department: String
-		designation: String
-		dateOfBirth: String
-		aadharNumber: String
 		contactNumber: String
-		registrationNumber: String
-		address: AddressInputObject
 		alternativeContact: String
 		dateOfJoining: String
 		dateOfLeaving: String
@@ -139,36 +123,57 @@ module.exports = gql`
 		photo: String
 		email: String
 		teaches: [Subject]
-		department: String
 		contactNumber: String
+		alternativeContact: String
 		dateOfJoining: String
 		dateOfLeaving: String
 		classTeacherOf: Class
-		alternativeContact: String
+
 		createdAt: Float
-		createdBy: ID
+		createdBy: Teacher
 		updatedAt: Float
-		updatedBy: ID
+		updatedBy: Teacher
 	}
 
-	input NoteInput {
-		subject: String
-		description: String
-		scope: String
-		scopeId: String
+	input AttendenceInput {
+		day: String
+		holiday: String
+		students: [ID]
 	}
-	type Note {
+	type Attendence {
 		_id: ID
-		subject: String
-		description: String
+		day: String
+		holiday: String
+		totalStudents: Int
+		students: [Student]
+
+		updatedAt: Float
+		updatedBy: Teacher
+	}
+
+	input PageInput {
 		scope: String
-		scopeId: String
+		subject: String
+		validFor: String
+		description: String
+	}
+	type Page {
+		_id: ID
+		scope: String
+		edited: Boolean
+		subject: String
+		validFor: String # Name of Scope
+		description: String
+
 		createdAt: Float
-		createdBy: ID
+		createdBy: Teacher
+		updatedAt: Float
+		updatedBy: Teacher
 	}
 
 	input SubjectInput {
 		name: String
+		language: String
 		subjectCode: String
 		uniSubjectCode: String
 		teacher: ID
@@ -176,16 +181,19 @@ module.exports = gql`
 	type Subject {
 		_id: ID
 		name: String
+		class: String
+		language: String
 		subjectCode: String
 		uniSubjectCode: String
 		teacher: Teacher
-		class: String
+
 		createdAt: Float
-		createdBy: ID
+		createdBy: Teacher
 		updatedAt: Float
-		updatedBy: ID
+		updatedBy: Teacher
 	}
-	input SessionInput {
+
+	input ClassInput {
 		name: String
 		newName: String
 		sessionEnd: String
@@ -195,129 +203,148 @@ module.exports = gql`
 	type Class {
 		_id: ID
 		name: String
-		course: String
 		sessionStart: String
 		sessionEnd: String
 		totalStudents: Int
-		students: [Student]
-		classTeacher: ID
+		classTeacher: Teacher
+
 		createdAt: Float
-		createdBy: ID
+		createdBy: Teacher
 		updatedAt: Float
-		updatedBy: ID
-	}
-	input CourseInput {
-		name: String
-		identifier: String
-		duration: String
-		semesterBased: Boolean
-		director: String
-		department: String
-		headOfDepartment: String
-	}
-	type Course {
-		_id: ID
-		name: String
-		duration: String
-		identifier: String
-		semesterBased: Boolean
-		department: String
-		director: String
-		headOfDepartment: String
-		createdBy: ID
-		createdAt: Float
-		updatedAt: Float
-		updatedBy: ID
-	}
-	input DptInput {
-		name: String
-		director: String
-		headOfDepartment: String
-	}
-	type Department {
-		_id: ID
-		name: String
-		courses: [Course]
-		director: String
-		teachers: [Teacher]!
-		headOfDepartment: String
-		createdAt: Float
-		createdBy: ID
-		updatedAt: Float
-		updatedBy: ID
-	}
-	type RootDpt {
-		departments: [Department]!
-		teachers: [Teacher]!
+		updatedBy: Teacher
 	}
 
-	input DayTimeMapInput {
-		subjectId: ID
-		teacherId: ID
+	input CourseInput {
+		name: String
+		duration: String
+		identifier: String
+		headOfDepartment: ID
+		semesterBased: Boolean
+	}
+	type Course {
+		_id: ID!
+		name: String
+		duration: String
+		identifier: String
+		semesterBased: Boolean
+		headOfDepartment: Teacher
+
+		createdAt: Float
+		createdBy: Teacher
+		updatedAt: Float
+		updatedBy: Teacher
+	}
+
+	input DepartmentInput {
+		name: String
+		director: ID
+	}
+	type Department {
+		_id: ID!
+		name: String
+		director: Teacher
+
+		createdAt: Float
+		createdBy: Teacher
+		updatedAt: Float
+		updatedBy: Teacher
+	}
+
+	input TimeMapInput {
+		subject: ID
+		teacher: ID
 	}
 	input TimeTableInput {
 		from: String
 		to: String
-		detail: [DayTimeMapInput]!
+		days: [TimeMapInput]!
 	}
 
-	type DayTimeMap {
-		subjectId: ID
-		teacherID: ID
-	}
-	type SubjectDayTimeMap {
-		from: String
-		to: String
-		detail: [DayTimeMap]!
+	type TimeMap {
+		subject: Subject
+		teacher: Teacher
 	}
 	type TimeTable {
 		_id: ID
-		time: [SubjectDayTimeMap]!
+		from: String
+		to: String
+		days: [TimeMap]!
+
+		createdAt: Float
+		createdBy: Teacher
+		updatedAt: Float
+		updatedBy: Teacher
 	}
 
 	type Query {
-		departments: RootDpt!
-		class(cid: ID): Class!
-		notes(nid: ID): [Note]!
-		subjects(className: String): [Subject]!
-		timeTable(className: String!): TimeTable!
-		teachers(department: ID, teacher: ID): [Teacher]!
-		classes(course: ID!): [Class]
-		students(sid: ID, cid: ID): [Student]!
-		attendence(cid: ID, of: String!): [Attendence]!
-		attendenceMonth(cid: ID, month: Int, year: Int): [Attendence]!
+		departments: [Department]!
+
+		courses(department: ID): [Course]!
+
+		teachers(department: ID): [Teacher]!
+		teacher(username: String): Teacher!
+
+		students(class: ID): [Student]!
+		student(username: String): Student!
+
+		classes(course: ID!): [Class]!
+
+		subjects(class: String!): [Subject]!
+
+		timeTable(class: String!): TimeTable!
+
+		attendence(class: ID, month: Int, year: Int): [Attendence]!
+
+		friends: [Student]!
+
+		notes: [Page]!
+
+		notices: [Page]!
+		notice(_id: ID!): Page!
 	}
+
 	type Mutation {
-		addAttendence(data: AttendenceInput!): String!
-		addAttendenceMany(cid: ID!, data: [AttendenceInput]!): String!
-		updateAttendence(aid: ID!, data: [AttendenceInput]!): String!
+		addAttendence(class: ID, data: AttendenceInput!): String!
+		attendenceMonth(class: ID, data: [AttendenceInput]!): [Attendence]!
 
-		createTimeTable(className: String!, data: [TimeTableInput]!): String!
-		updateTimeTable(_id: ID!, data: [TimeTableInput]!): String!
+		addTimeTable(class: String!, data: [TimeTableInput]!): TimeTable!
+		updateTimeTable(_id: ID!, data: [TimeTableInput]!): TimeTable!
 
-		addSubject(class_id: ID!, subjects: [SubjectInput]!): String!
-		updateSubject(sid: ID!, data: SubjectInput!): String!
+		addSubjects(class: String!, data: [SubjectInput]!): [Subject]!
+		updateSubject(_id: ID!, data: SubjectInput!): Subject!
+		deleteSubject(_id: ID!): Boolean!
 
-		newSession(course: ID!, data: [SessionInput]!): String!
-		updateDepartment(did: ID!, data: DptInput!): String!
+		newSession(course: ID!, data: [ClassInput]!): [Class]!
+		updateClass(_id: ID!, data: ClassInput!): Class!
+		deleteClass(_id: ID!): Boolean!
 
-		addTeacher(data: TeacherInput!): String!
-		updateTeacher(tid: ID!, data: TeacherInput!): String!
+		addDepartment(data: DepartmentInput!): Department!
+		updateDepartment(_id: ID!, data: DepartmentInput!): Department!
 
-		addStudent(data: StudentInput!): String!
-		updateStudent(sid: ID!, data: StudentInput!): String!
+		addCourse(department: ID!, data: CourseInput!): Course!
+		updateCourse(_id: ID!, data: CourseInput!): Course!
+		deleteCourse(_id: ID!, classes: Boolean): Boolean!
 
-		addCourse(data: CourseInput!): String!
-		updateCourse(cid: ID!, data: CourseInput!): String!
+		addTeacher(department: ID!, data: TeacherInput!): Teacher!
+		updateTeacher(_id: ID!, data: TeacherInput!): Teacher!
+		deleteTeacher(_id: ID!): Boolean!
 
-		createNotice(data: NoteInput!): String!
-		updateClass(cid: ID!, data: SessionInput!): String!
+		addStudent(data: StudentInput!): Student!
+		updateStudent(_id: ID!, data: StudentInput!): Student!
+		deleteStudent(_id: ID!): Boolean!
 
-		createNote(data: NoteInput!): String!
-		updateNote(gid: ID!, data: NoteInput!): String!
+		addFriends(friends: [ID]!): [Student]!
+		updateFriends(friends: [ID]!): [Student]!
+
+		addNote(data: PageInput!): Page!
+		updateNote(_id: ID!, data: PageInput!): Page!
+		deleteNote(_id: ID!): Boolean!
+
+		addNotice(data: PageInput!): Page!
+		updateNotice(_id: ID!, data: PageInput!): Page!
+		deleteNotice(_id: ID!): Boolean!
 
 		login(username: String!, password: String!): String!
-
 		changePassword(oldPassword: String!, newPassword: String!): String!
 	}
 `;
